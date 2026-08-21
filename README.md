@@ -34,15 +34,15 @@ Uploaded images are kept outside the Render web-service filesystem. The applicat
 
 ## Run locally in Termux
 1. Install Node.js 20+ and Git.
-2. Extract this project and enter it:
+2. Extract the project and enter it:
    `cd NAICTS-INFOHUB-COMPLETE`
-3. Install dependencies:
+3. Installed dependencies:
    `npm install`
 4. Copy environment configuration:
    `cp .env.example .env`
 5. Create a local PostgreSQL database and put its connection string in `DATABASE_URL`.
 6. Set a strong `JWT_SECRET`, `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env`.
-7. If you need image uploads locally, add the three Cloudinary values.
+7. Incase I  need image uploads locally, I'll the three Cloudinary values.
 8. Start:
    `npm start`
 9. Open:
@@ -74,26 +74,26 @@ Recommended Render settings:
 - `NODE_ENV=production`
 - `DATABASE_URL`: Render PostgreSQL connection string
 - `JWT_SECRET`: long random secret
-- `ADMIN_EMAIL`: your real CMS email
+- `ADMIN_EMAIL`:  real CMS email
 - `ADMIN_PASSWORD`: strong initial CMS password
-- Cloudinary credentials: from your Cloudinary account
+- Cloudinary credentials: from my Cloudinary account
 
-**Never put `.env`, database passwords, JWT secrets or Cloudinary secrets in GitHub.** Add secrets through Render Environment Variables.
+**I will not and never put `.env`, database passwords, JWT secrets or Cloudinary secrets in GitHub.** Add secrets through Render Environment Variables.
 
 ## Health check
-After deployment, open `/api/health`. A healthy response reports PostgreSQL and whether Cloudinary media storage is configured.
+After deployment, I opened `/api/health`. A healthy response reports PostgreSQL and whether Cloudinary media storage is configured.
 
 ## Branding / logo
-`public/assets/logo.svg` is the centralized branding asset currently included. The header, hero, footer, admin login and loading screen reference this same file. Replace that single file with the official supplied NAICTS/faculty logo when the original asset is available, keeping the filename `logo.svg`.
+`public/assets/logo.svg` is the centralized branding asset currently included which is the SICT logo. The header, hero, footer, admin login and loading screen reference this same file. Replace that single file with the official supplied NAICTS/faculty logo when the original asset is available, keeping the filename `logo.svg`.
 
 ## Loading behavior
 The public website uses the NAICTS logo as the central loading visual. Public navigation uses in-page/hash routing so article views can open without a full-page reload.
 
 ## Production security checklist
-- Use a long random `JWT_SECRET`.
-- Use a strong unique CMS password.
-- Use HTTPS through Render.
-- Keep all secrets in Render environment variables.
-- Do not commit `.env`.
-- Rotate the initial admin password after first deployment.
-- Configure Cloudinary before enabling image uploads.
+- I uses a long random `JWT_SECRET`.
+- Used a strong unique CMS password.
+- Used HTTPS through Render.
+- Keeps all secrets in Render environment variables.
+- I don't not commit `.env`.
+- I Rotate the initial admin password after first deployment.
+- And lastly I Configure Cloudinary before enabling image uploads.
