@@ -1,6 +1,6 @@
 # NAICTS INFOHUB — Complete Production-Oriented Build
 
-NAICTS INFOHUB is a public-first information platform for NAICTS and the faculty. Visitors can open the website and read official news, announcements, PRO communications and events **without creating an account**.
+NAICTS INFOHUB is a faculty-first information platform for National Association of Information and Communication Technology Students FUTMINNA. Visitors can open the website and read official, announcements, PRO communications and events from the faculty **without creating an account**.
 
 ## Public product rules
 - No public registration or login.
