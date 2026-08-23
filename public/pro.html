@@ -226,7 +226,101 @@ async function loadPro() {
 
 }
 
-loadPro();
+
+async function loadPost(slug) {
+
+  const list =
+    document.getElementById('announcements-list') ||
+    document.getElementById('pro-list') ||
+    document.querySelector('.grid');
+
+  try {
+
+    const response = await fetch(
+      '/api/public/posts/' + encodeURIComponent(slug),
+      {
+        headers: { Accept: 'application/json' }
+      }
+    );
+
+    if (!response.ok) throw new Error('Post not found');
+
+    const post = await response.json();
+
+    list.innerHTML = `
+      <article class="detail">
+
+        <a class="back" href="/pro.html">
+          ← Back to PRO Desk
+        </a>
+
+        <span class="eyebrow">
+          ${esc(post.category || 'PRO')}
+        </span>
+
+        <h1>${esc(post.title)}</h1>
+
+        <p class="meta">
+          <span>${esc(post.author || 'NAICTS')}</span>
+          <span>
+            ${new Date(
+              post.published_at || post.created_at
+            ).toLocaleDateString()}
+          </span>
+        </p>
+
+        ${post.cover_image ? `
+          <img
+            class="detail-image"
+            src="${esc(post.cover_image)}"
+            alt="${esc(post.title)}"
+          >
+        ` : ''}
+
+        <div class="content">
+          ${post.content}
+        </div>
+
+        <br>
+
+        <a
+          class="btn"
+          target="_blank"
+          rel="noopener"
+          href="https://wa.me/?text=${encodeURIComponent(
+            post.title + ' — ' + location.href
+          )}"
+        >
+          Share on WhatsApp
+        </a>
+
+      </article>
+    `;
+
+  } catch (error) {
+
+    list.innerHTML = `
+      <div class="empty">
+        Unable to load this PRO communication.
+        <br><br>
+        <a class="btn" href="/pro.html">
+          Back to PRO Desk
+        </a>
+      </div>
+    `;
+
+  }
+}
+
+const postParam =
+  new URLSearchParams(location.search).get('post');
+
+if (postParam) {
+  loadPost(postParam);
+} else {
+  loadPro();
+}
+
 
 </script>
 
