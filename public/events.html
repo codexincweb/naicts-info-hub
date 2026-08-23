@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#001f54">
+  <meta name="description" content="Upcoming NAICTS FUTMINNA events, programmes, meetings and activities.">
+  <title>Events | NAICTS INFOHUB</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+<div id="loader" class="loader">
+  <img src="/assets/naicts-logo.jpg" alt="NAICTS">
+  <div class="loader-ring"></div>
+  <strong>NAICTS INFOHUB</strong>
+  <span>Loading events…</span>
+</div>
+
+<header class="topbar">
+  <a class="brand" href="/">
+    <img src="/assets/naicts-logo.jpg" alt="NAICTS">
+    <span>
+      <b>NAICTS INFOHUB</b>
+      <small>Updates • Announcements • Events</small>
+    </span>
+  </a>
+
+  <button class="menu" id="menu">☰</button>
+
+  <nav id="nav">
+    <a href="/">Home</a>
+    <a href="/updates.html">Updates</a>
+    <a href="/announcements.html">Announcements</a>
+    <a href="/pro.html">PRO Desk</a>
+    <a href="/events.html">Events</a>
+    <a href="/gallery.html">SICT Gallery</a>
+    <a href="/about.html">About</a>
+    <a href="/admin">CMS</a>
+  </nav>
+</header>
+
+<main>
+
+<section class="page-hero">
+  <span class="eyebrow">WHAT'S NEXT</span>
+
+  <h1>
+    Upcoming <em>Events.</em>
+  </h1>
+
+  <p>
+    Stay informed about NAICTS programmes, meetings,
+    activities and other important events at FUTMINNA.
+  </p>
+</section>
+
+<section class="soft">
+
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">NAICTS CALENDAR</span>
+      <h2>Upcoming Events</h2>
+    </div>
+  </div>
+
+  <div id="events-list" class="event-grid">
+    <div class="empty">Loading events...</div>
+  </div>
+
+</section>
+
+</main>
+
+<footer>
+
+  <div class="footer-brand">
+    <img src="/assets/naicts-logo.jpg" alt="NAICTS">
+
+    <div>
+      <b>NAICTS INFOHUB</b>
+      <span>
+        The official information hub for the National Association
+        of Information and Communication Technology Students,
+        FUTMINNA.
+      </span>
+    </div>
+  </div>
+
+  <div class="footer-links">
+    <a href="/">Home</a>
+    <a href="/updates.html">Updates</a>
+    <a href="/announcements.html">Announcements</a>
+    <a href="/pro.html">PRO Desk</a>
+    <a href="/events.html">Events</a>
+    <a href="/gallery.html">SICT Gallery</a>
+    <a href="/about.html">About</a>
+  </div>
+
+  <small>© 2026 NAICTS FUTMINNA | From the Office of the Director of Software</small>
+
+</footer>
+
+<script>
+async function loadEvents() {
+
+  const container = document.getElementById('events-list');
+
+  try {
+
+    const response = await fetch('/api/public/events');
+
+    if (!response.ok) {
+      throw new Error('Unable to load events');
+    }
+
+    const events = await response.json();
+
+    if (!events.length) {
+      container.innerHTML = `
+        <div class="empty">
+          No upcoming events have been published yet.
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = events.map(event => {
+
+      const date = event.date
+        ? new Date(event.date).toLocaleDateString(
+            'en-NG',
+            {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            }
+          )
+        : 'Date to be announced';
+
+      return `
+       return `
+  <article class="event">
+
+    ${
+      event.image
+        ? `
+          <img
+            src="${escapeHtml(event.image)}"
+            alt="${escapeHtml(event.title || 'NAICTS Event')}"
+            style="width:100%;height:220px;object-fit:cover;border-radius:14px;margin-bottom:16px;"
+          >
+        `
+        : ''
+    }
+
+    <div class="date">
+      ${date}
+    </div>
+          <h3>
+            ${escapeHtml(event.title || 'NAICTS Event')}
+          </h3>
+
+          ${
+            event.time
+              ? `<p><strong>Time:</strong> ${escapeHtml(event.time)}</p>`
+              : ''
+          }
+
+          ${
+            event.venue
+              ? `<p><strong>Venue:</strong> ${escapeHtml(event.venue)}</p>`
+              : ''
+          }
+
+          ${
+            event.description
+              ? `<p>${escapeHtml(event.description)}</p>`
+              : ''
+          }
+
+        </article>
+      `;
+
+    }).join('');
+
+  } catch (error) {
+
+    container.innerHTML = `
+      <div class="empty">
+        Unable to load events right now.
+        Please try again later.
+      </div>
+    `;
+
+  }
+}
+
+
+function escapeHtml(value) {
+
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+}
+
+
+window.addEventListener('load', () => {
+
+  setTimeout(() => {
+    document
+      .getElementById('loader')
+      ?.classList.add('hide');
+  }, 650);
+
+  loadEvents();
+
+});
+
+
+document.getElementById('menu')?.addEventListener('click', () => {
+
+  document
+    .getElementById('nav')
+    ?.classList.toggle('open');
+
+});
+</script>
+
+</body>
+</html>

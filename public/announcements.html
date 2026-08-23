@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#001f54">
+  <meta name="description" content="Official NAICTS FUTMINNA announcements and important notices.">
+  <title>Announcements | NAICTS INFOHUB</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+<div id="loader" class="loader">
+  <img src="/assets/naicts-logo.jpg" alt="NAICTS">
+  <div class="loader-ring"></div>
+  <strong>NAICTS INFOHUB</strong>
+  <span>Loading announcements…</span>
+</div>
+
+<header class="topbar">
+
+  <a class="brand" href="/">
+    <img src="/assets/naicts-logo.jpg" alt="NAICTS">
+
+    <span>
+      <b>NAICTS INFOHUB</b>
+      <small>Updates • Announcements • Events</small>
+    </span>
+  </a>
+
+  <button class="menu" id="menu">☰</button>
+
+  <nav id="nav">
+    <a href="/">Home</a>
+    <a href="/updates.html">Updates</a>
+    <a href="/announcements.html">Announcements</a>
+    <a href="/pro.html">PRO Desk</a>
+    <a href="/events.html">Events</a>
+    <a href="/gallery.html">SICT Gallery</a>
+    <a href="/about.html">About</a>
+    <a href="/admin">CMS</a>
+  </nav>
+
+</header>
+
+<main>
+
+  <section class="page-hero">
+
+    <span class="eyebrow">OFFICIAL NOTICES</span>
+
+    <h1>
+      Important announcements for the
+      <em>NAICTS community.</em>
+    </h1>
+
+    <p>
+      Official announcements and important notices published
+      through NAICTS INFOHUB.
+    </p>
+
+  </section>
+
+  <section class="soft">
+
+    <div class="section-head">
+
+      <div>
+        <span class="eyebrow">ANNOUNCEMENTS</span>
+        <h2>Latest Notices</h2>
+      </div>
+
+    </div>
+
+    <div id="announcements-list" class="grid">
+
+      <div class="empty">
+        Loading announcements…
+      </div>
+
+    </div>
+
+  </section>
+
+</main>
+
+<footer>
+
+  <div class="footer-brand">
+
+    <img src="/assets/naicts-logo.jpg" alt="NAICTS">
+
+    <div>
+      <b>NAICTS INFOHUB</b>
+
+      <span>
+        Official information hub for NAICTS FUTMINNA.
+      </span>
+    </div>
+
+  </div>
+
+  <div class="footer-links">
+    <a href="/">Home</a>
+    <a href="/updates.html">Updates</a>
+    <a href="/announcements.html">Announcements</a>
+    <a href="/pro.html">PRO Desk</a>
+    <a href="/events.html">Events</a>
+    <a href="/gallery.html">SICT Gallery</a>
+    <a href="/about.html">About</a>
+  </div>
+
+  <small>© 2026 NAICTS FUTMINNA</small>
+
+</footer>
+
+<script>
+
+const esc = value =>
+  String(value ?? '').replace(/[&<>'"]/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;'
+  }[char]));
+
+window.addEventListener('load', () => {
+
+  setTimeout(() => {
+    document.getElementById('loader')?.classList.add('hide');
+  }, 650);
+
+});
+
+document.getElementById('menu')?.addEventListener('click', () => {
+
+  document.getElementById('nav')?.classList.toggle('open');
+
+});
+
+async function loadAnnouncements() {
+
+  const list = document.getElementById('announcements-list');
+
+  try {
+
+    const response = await fetch(
+      '/api/public/posts?category=' +
+      encodeURIComponent('Announcement'),
+      {
+        headers: {
+          Accept: 'application/json'
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Request failed');
+    }
+
+    const posts = await response.json();
+
+    if (!posts.length) {
+
+      list.innerHTML =
+        '<div class="empty">No announcements have been published yet.</div>';
+
+      return;
+    }
+
+    list.innerHTML = posts.map(post => `
+
+      <article
+        class="card"
+        onclick="location.href='/updates.html?post=${encodeURIComponent(post.slug)}'"
+      >
+
+        <span class="tag">
+          ANNOUNCEMENT
+        </span>
+
+        <h3>
+          ${esc(post.title)}
+        </h3>
+
+        <p>
+          ${esc(post.excerpt || post.content)
+            .replace(/\s+/g, ' ')
+            .slice(0, 170)}
+          ${(post.excerpt || post.content).length > 170 ? '…' : ''}
+        </p>
+
+        <div class="meta">
+
+          <span>
+            ${esc(post.author || 'NAICTS')}
+          </span>
+
+          <span>
+            ${new Date(
+              post.published_at || post.created_at
+            ).toLocaleDateString()}
+          </span>
+
+        </div>
+
+        <div class="read">
+          Read announcement →
+        </div>
+
+      </article>
+
+    `).join('');
+
+  } catch (error) {
+
+    list.innerHTML =
+      '<div class="empty">Unable to load announcements right now.</div>';
+
+  }
+
+}
+
+loadAnnouncements();
+
+</script>
+
+</body>
+</html>

@@ -95,6 +95,17 @@ async function migrate() {
       image TEXT NOT NULL DEFAULT '',
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+    CREATE TABLE IF NOT EXISTS gallery (
+      id BIGSERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      image TEXT NOT NULL,
+      category TEXT NOT NULL DEFAULT 'General',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE INDEX IF NOT EXISTS gallery_created_idx
+      ON gallery(created_at DESC);
 
     CREATE INDEX IF NOT EXISTS posts_status_idx
       ON posts(status);
@@ -153,8 +164,8 @@ async function migrate() {
         'Welcome to NAICTS INFOHUB',
         'welcome-to-naicts-infohub',
         'Your central place for official NAICTS and faculty information.',
-        'NAICTS INFOHUB brings official news, announcements, PRO communications and events into one accessible public platform.',
-        'News',
+        'NAICTS INFOHUB brings official updates, announcements, PRO communications and events into one accessible public platform.',
+        'Updates',
         'NAICTS INFOHUB',
         'published',
         true

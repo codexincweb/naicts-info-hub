@@ -94,13 +94,62 @@ app.put('/api/admin/posts/:id', auth, staff, async (req,res) => {
   const old = await query('SELECT * FROM posts WHERE id=$1',[req.params.id]); if(!old.rowCount) return res.status(404).json({error:'Post not found'});
   const p=old.rows[0], b=req.body||{}; let status=b.status||p.status; if(status==='published'&&!canPublish(req.user.role)) status='review'; let slug=slugify(b.title||p.title); const same=await query('SELECT id FROM posts WHERE slug=$1 AND id<>$2',[slug,p.id]); if(same.rowCount) slug+='-'+p.id;
   const published=status==='published'?(p.published_at||now()):null;
-  const r=await query(`UPDATE posts SET title=$1,slug=$2,excerpt=$3,content=$4,category=$5,cover_image=$6,author=$7,status=$8,featured=$9,published_at=$10,updated_at=NOW() WHERE id=$11 RETURNING *`,[b.title||p.title,slug,b.excerpt??p.excerpt,b.content??p.content,b.category||p.category,b.cover_image??p.cover_image,b.author||p.author,status,Boolean(b.featured),published,p.id]); res.json(r.rows[0]);
+  const r=await query(`UPDATE posts SET title=$1,slug=$2,excerpt=$3,content=$4,category=$5,cover_image=$6,author=$7,status=$8,featured=$9,published_at=$10,updated_at=NOW() WHERE id=$11 RETURNING *`,[b.title||p.title,slug,b.excerpt??p.excerpt,cleanContent(b.content ?? p.content),b.category||p.category,b.cover_image??p.cover_image,b.author||p.author,status,Boolean(b.featured),published,p.id]); res.json(r.rows[0]);
 });
 app.delete('/api/admin/posts/:id',auth,staff,async(req,res)=>{const r=await query('DELETE FROM posts WHERE id=$1',[req.params.id]);res.json({ok:r.rowCount>0});});
 
 app.get('/api/admin/events', auth, staff, async(req,res)=>{const r=await query('SELECT * FROM events ORDER BY date ASC');res.json(r.rows);});
 app.post('/api/admin/events', auth, staff, async(req,res)=>{const b=req.body||{};if(!b.title||!b.date)return res.status(400).json({error:'Title and date are required'});let slug=slugify(b.title);const e=await query('SELECT id FROM events WHERE slug=$1',[slug]);if(e.rowCount)slug+='-'+Date.now();const r=await query('INSERT INTO events(title,slug,description,date,time,venue,image) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *',[b.title,slug,b.description||'',b.date,b.time||'',b.venue||'',b.image||'']);res.status(201).json(r.rows[0]);});
 app.delete('/api/admin/events/:id', auth, staff, async(req,res)=>{const r=await query('DELETE FROM events WHERE id=$1',[req.params.id]);res.json({ok:r.rowCount>0});});
+app.get('/api/public/gallery', async (req,res) => {
+  const r = await query(
+    'SELECT * FROM gallery ORDER BY created_at DESC'
+  );
+  res.json(r.rows);
+});
+
+app.get('/api/admin/gallery', auth, staff, async (req,res) => {
+  const r = await query(
+    'SELECT * FROM gallery ORDER BY created_at DESC'
+  );
+  res.json(r.rows);
+});
+
+app.post('/api/admin/gallery', auth, staff, async (req,res) => {
+  const b = req.body || {};
+
+  if (!b.title || !b.image) {
+    return res.status(400).json({
+      error: 'Title and image are required'
+    });
+  }
+
+  const r = await query(
+    `INSERT INTO gallery
+      (title, description, image, category)
+     VALUES ($1,$2,$3,$4)
+     RETURNING *`,
+    [
+      b.title,
+      b.description || '',
+      b.image,
+      b.category || 'General'
+    ]
+  );
+
+  res.status(201).json(r.rows[0]);
+});
+
+app.delete('/api/admin/gallery/:id', auth, staff, async (req,res) => {
+  const r = await query(
+    'DELETE FROM gallery WHERE id=$1',
+    [req.params.id]
+  );
+
+  res.json({
+    ok: r.rowCount > 0
+  });
+});
 
 app.post('/api/admin/upload', auth, staff, upload.single('image'), async (req,res) => {
   if (!req.file) return res.status(400).json({ error: 'Valid image required' });

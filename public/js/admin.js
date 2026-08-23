@@ -148,6 +148,7 @@ async function view(section) {
     if (section === 'overview') return overview();
     if (section === 'posts') return posts();
     if (section === 'events') return events();
+    if (section === 'gallery') return gallery();
     if (section === 'media') return media();
 
   } catch (error) {
@@ -365,22 +366,49 @@ function insertLink() {
   }
 }
 
+async function insertImage() {
 
-function insertImage() {
+  const input = document.createElement('input');
 
-  const url = prompt(
-    'Enter the image URL:',
-    'https://'
-  );
+  input.type = 'file';
+  input.accept = 'image/jpeg,image/png,image/webp,image/gif';
 
-  if (!url) return;
+  input.onchange = async () => {
 
-  editorCommand(
-    'insertHTML',
-    `<img src="${esc(url.trim())}" alt="" style="max-width:100%;height:auto;border-radius:12px;margin:15px 0">`
-  );
+    const file = input.files?.[0];
+
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image must be 5MB or smaller.');
+      return;
+    }
+
+    try {
+
+      const form = new FormData();
+
+      form.append('image', file);
+
+      const uploaded = await api('/api/admin/upload', {
+        method: 'POST',
+        body: form
+      });
+
+      editorCommand(
+        'insertHTML',
+        `<img src="${esc(uploaded.url)}" alt="" style="max-width:100%;height:auto;border-radius:12px;margin:15px 0">`
+      );
+
+    } catch (error) {
+
+      alert(error.message || 'Image upload failed.');
+
+    }
+  };
+
+  input.click();
 }
-
 
 /* =========================
    CREATE / EDIT POST
@@ -587,7 +615,7 @@ function newPost(post = {}) {
           </div>
 
           <small style="color:#68778d">
-            You can write very long information,
+            Start writing information,
             format the text, add links and optionally insert images.
           </small>
 
@@ -615,16 +643,26 @@ function newPost(post = {}) {
 
         <br>
 
-        <label>
-          <b>Cover Image URL (Optional)</b>
+       <label>
+  <b>Cover Image</b>
 
-          <input
-            name="cover_image"
-            placeholder="Leave empty if no cover image is needed"
-            value="${esc(post.cover_image)}"
-          >
+  <input
+    id="postCoverImage"
+    type="file"
+    accept="image/jpeg,image/png,image/webp,image/gif"
+  >
 
-        </label>
+  <small style="display:block;margin-top:6px;color:#68778d">
+    Select a cover image directly from your phone.
+    Maximum size: 5MB.
+  </small>
+
+  <div
+    id="postImageStatus"
+    style="margin-top:8px;color:#68778d"
+  ></div>
+
+</label>
 
         <br>
 
@@ -724,16 +762,39 @@ function newPost(post = {}) {
       return;
     }
 
-    const data = {
-      title: formData.get('title'),
-      excerpt: formData.get('excerpt') || '',
-      content,
-      category: formData.get('category') || 'News',
-      author: formData.get('author') || user.name,
-      cover_image: formData.get('cover_image') || '',
-      status: formData.get('status') || 'draft',
-      featured: formData.has('featured')
-    };
+   const imageFile = $('#postCoverImage')?.files?.[0];
+const imageStatus = $('#postImageStatus');
+
+let coverImage = post.cover_image || '';
+
+if (imageFile) {
+
+  imageStatus.textContent = 'Uploading cover image...';
+
+  const uploadForm = new FormData();
+
+  uploadForm.append('image', imageFile);
+
+  const uploaded = await api('/api/admin/upload', {
+    method: 'POST',
+    body: uploadForm
+  });
+
+  coverImage = uploaded.url;
+
+  imageStatus.textContent = 'Cover image uploaded successfully.';
+}
+
+const data = {
+  title: formData.get('title'),
+  excerpt: formData.get('excerpt') || '',
+  content,
+  category: formData.get('category') || 'News',
+  author: formData.get('author') || user.name,
+  cover_image: coverImage,
+  status: formData.get('status') || 'draft',
+  featured: formData.has('featured')
+};
 
     const button = form.querySelector('button[type="submit"]');
 
@@ -889,7 +950,6 @@ async function events() {
   `;
 }
 
-
 window.newEvent = () => {
 
   const modal = document.createElement('div');
@@ -931,10 +991,26 @@ window.newEvent = () => {
           placeholder="Event description"
         ></textarea>
 
-        <input
-          name="image"
-          placeholder="Image URL (optional)"
-        >
+        <label>
+          <b>Event Image</b>
+
+          <input
+            id="eventImage"
+            name="image"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+          >
+
+          <small style="display:block;margin-top:6px;color:#68778d">
+            Select an image directly from your phone.
+            Maximum size: 5MB.
+          </small>
+        </label>
+
+        <div
+          id="eventUploadStatus"
+          style="margin-top:8px;color:#68778d"
+        ></div>
 
         <div class="modal-actions">
 
@@ -946,7 +1022,7 @@ window.newEvent = () => {
             Cancel
           </button>
 
-          <button>
+          <button type="submit">
             Save Event
           </button>
 
@@ -959,15 +1035,53 @@ window.newEvent = () => {
 
   document.body.appendChild(modal);
 
-
   $('#eventForm').onsubmit = async e => {
 
     e.preventDefault();
 
-    const button =
-      e.target.querySelector('button[type="submit"]');
+    const form = e.target;
+    const button = form.querySelector('button[type="submit"]');
+    const status = $('#eventUploadStatus');
+    const imageFile = $('#eventImage')?.files?.[0];
+
+    button.disabled = true;
 
     try {
+
+      let imageUrl = '';
+
+      /* Upload event image to Cloudinary */
+
+      if (imageFile) {
+
+        status.textContent = 'Uploading image...';
+
+        const uploadForm = new FormData();
+
+        uploadForm.append('image', imageFile);
+
+        const uploaded = await api('/api/admin/upload', {
+          method: 'POST',
+          body: uploadForm
+        });
+
+        imageUrl = uploaded.url;
+
+        status.textContent = 'Image uploaded successfully.';
+      }
+
+      /* Save event */
+
+      const data = {
+        title: form.elements.title.value.trim(),
+        date: form.elements.date.value,
+        time: form.elements.time.value.trim(),
+        venue: form.elements.venue.value.trim(),
+        description: form.elements.description.value.trim(),
+        image: imageUrl
+      };
+
+      button.textContent = 'Saving Event...';
 
       await api('/api/admin/events', {
         method: 'POST',
@@ -976,11 +1090,7 @@ window.newEvent = () => {
           'Content-Type': 'application/json'
         },
 
-        body: JSON.stringify(
-          Object.fromEntries(
-            new FormData(e.target)
-          )
-        )
+        body: JSON.stringify(data)
       });
 
       modal.remove();
@@ -990,10 +1100,16 @@ window.newEvent = () => {
     } catch (error) {
 
       alert(error.message);
+
+      button.disabled = false;
+      button.textContent = 'Save Event';
+
+      if (status) {
+        status.textContent = '';
+      }
     }
   };
-};
-
+};     
 
 window.delEvent = async id => {
 
@@ -1092,3 +1208,330 @@ async function media() {
 ========================= */
 
 showDash();
+/* =========================
+   GALLERY CMS
+========================= */
+
+async function gallery() {
+  const data = await api('/api/admin/gallery');
+
+  $('#view').innerHTML = `
+    <div class="panel">
+
+      <div class="toolbar">
+        <div>
+          <h2 style="margin:0">SICT Gallery</h2>
+          <small>
+            Manage official NAICTS photos and visual stories.
+          </small>
+        </div>
+
+        <button onclick="newGalleryItem()">
+          + Add Photo
+        </button>
+      </div>
+
+      ${
+        data.length
+          ? `
+            <div class="gallery-admin-grid">
+              ${data.map(item => `
+                <article class="gallery-admin-card">
+
+                  <img
+                    src="${esc(item.image)}"
+                    alt="${esc(item.title)}"
+                  >
+
+                  <div class="gallery-admin-info">
+
+                    <span class="pill">
+                      ${esc(item.category)}
+                    </span>
+
+                    <h3>
+                      ${esc(item.title)}
+                    </h3>
+
+                    ${
+                      item.description
+                        ? `<p>${esc(item.description)}</p>`
+                        : ''
+                    }
+
+                    <button
+                      class="danger"
+                      onclick="deleteGalleryItem(${item.id})"
+                    >
+                      Delete
+                    </button>
+
+                  </div>
+
+                </article>
+              `).join('')}
+            </div>
+          `
+          : `
+            <div class="empty">
+              <strong>No gallery photos yet.</strong>
+              <br>
+              Click "Add Photo" to add the first official photo.
+            </div>
+          `
+      }
+
+    </div>
+  `;
+}
+
+
+/* =========================
+   ADD GALLERY PHOTO
+========================= */
+window.newGalleryItem = () => {
+
+  const modal = document.createElement('div');
+
+  modal.className = 'modal';
+
+  modal.innerHTML = `
+    <div class="modal-card">
+
+      <h2>Add Gallery Photo</h2>
+
+      <p style="color:#68778d">
+        Upload an official NAICTS photo directly from your phone.
+      </p>
+
+      <form id="galleryForm">
+
+        <label>
+          <b>Photo Title</b>
+
+          <input
+            name="title"
+            placeholder="e.g. NAICTS Orientation Programme"
+            required
+          >
+        </label>
+
+        <br>
+
+        <label>
+          <b>Description</b>
+
+          <textarea
+            name="description"
+            placeholder="Brief description of the photo..."
+            style="min-height:100px"
+          ></textarea>
+        </label>
+
+        <br>
+
+        <label>
+          <b>Category</b>
+
+          <select name="category">
+            <option value="General">General</option>
+            <option value="Events">Events</option>
+            <option value="Activities">Activities</option>
+            <option value="Academic">Academic</option>
+            <option value="Leadership">Leadership</option>
+          </select>
+        </label>
+
+        <br>
+
+        <label>
+          <b>Gallery Image</b>
+
+          <input
+            id="galleryImage"
+            name="image"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            required
+          >
+
+          <small style="color:#68778d">
+            JPEG, PNG, WebP or GIF. Maximum 5 MB.
+          </small>
+
+          <div id="galleryPreview" style="margin-top:15px"></div>
+        </label>
+
+        <div class="modal-actions">
+
+          <button
+            type="button"
+            class="secondary"
+            onclick="this.closest('.modal').remove()"
+          >
+            Cancel
+          </button>
+
+          <button type="submit">
+            Upload Photo
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const imageInput = $('#galleryImage');
+  const preview = $('#galleryPreview');
+
+  imageInput.onchange = () => {
+
+    const file = imageInput.files?.[0];
+
+    if (!file) {
+      preview.innerHTML = '';
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image must be 5 MB or smaller.');
+      imageInput.value = '';
+      preview.innerHTML = '';
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      preview.innerHTML = `
+        <img
+          src="${reader.result}"
+          alt="Preview"
+          style="
+            width:100%;
+            max-height:260px;
+            object-fit:cover;
+            border-radius:12px;
+            border:1px solid #e4e9f0;
+          "
+        >
+      `;
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+
+  $('#galleryForm').onsubmit = async e => {
+
+    e.preventDefault();
+
+    const form = e.target;
+    const file = imageInput.files?.[0];
+
+    if (!file) {
+      alert('Please choose an image.');
+      return;
+    }
+
+    const button =
+      form.querySelector('button[type="submit"]');
+
+    button.disabled = true;
+    button.textContent = 'Uploading image...';
+
+    try {
+
+      /* Upload image directly to Cloudinary through our server */
+
+      const uploadData = new FormData();
+
+      uploadData.append('image', file);
+
+      const uploaded = await api('/api/admin/upload', {
+        method: 'POST',
+        body: uploadData
+      });
+
+      if (!uploaded.url) {
+        throw new Error('Image upload failed.');
+      }
+
+      button.textContent = 'Saving gallery photo...';
+
+      /* Save Cloudinary URL in PostgreSQL */
+
+      const data = {
+        title: form.elements.title.value.trim(),
+        description: form.elements.description.value.trim(),
+        category: form.elements.category.value,
+        image: uploaded.url
+      };
+
+      if (!data.title) {
+        throw new Error('Photo title is required.');
+      }
+
+      await api('/api/admin/gallery', {
+        method: 'POST',
+
+        headers: {
+          'Content-Type': 'application/json'
+        },
+
+        body: JSON.stringify(data)
+      });
+
+      modal.remove();
+
+      await gallery();
+
+    } catch (error) {
+
+      alert(error.message || 'Unable to upload gallery photo.');
+
+      button.disabled = false;
+      button.textContent = 'Upload Photo';
+
+    }
+
+  };
+
+};
+
+/* =========================
+   DELETE GALLERY PHOTO
+========================= */
+
+window.deleteGalleryItem = async id => {
+
+  if (!confirm('Delete this gallery photo?')) {
+    return;
+  }
+
+  try {
+
+    await api(`/api/admin/gallery/${id}`, {
+      method: 'DELETE'
+    });
+
+    await gallery();
+
+  } catch (error) {
+
+    alert(error.message);
+
+  }
+
+};
+
+
+/* =========================
+   EXPOSE GALLERY
+========================= */
+
+window.gallery = gallery;

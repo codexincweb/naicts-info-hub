@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#001f54">
+  <meta name="description" content="NAICTS FUTMINNA updates and information.">
+  <title>Updates | NAICTS INFOHUB</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+<div id="loader" class="loader">
+  <img src="/assets/naicts-logo.jpg" alt="NAICTS">
+  <div class="loader-ring"></div>
+  <strong>NAICTS INFOHUB</strong>
+  <span>Loading updates…</span>
+</div>
+
+<header class="topbar">
+  <a class="brand" href="/">
+    <img src="/assets/naicts-logo.jpg" alt="NAICTS">
+    <span>
+      <b>NAICTS INFOHUB</b>
+      <small>Updates • Announcements • Events</small>
+    </span>
+  </a>
+
+  <button class="menu" id="menu">☰</button>
+
+  <nav id="nav">
+    <a href="/">Home</a>
+    <a href="/updates.html">Updates</a>
+    <a href="/announcements.html">Announcements</a>
+    <a href="/pro.html">PRO Desk</a>
+    <a href="/events.html">Events</a>
+    <a href="/gallery.html">SICT Gallery</a>
+    <a href="/about.html">About</a>
+    <a href="/admin">CMS</a>
+  </nav>
+</header>
+
+<main>
+
+  <section class="page-hero">
+    <span class="eyebrow">NAICTS INFORMATION</span>
+
+    <h1>
+      Updates that keep the
+      <em>community informed.</em>
+    </h1>
+
+    <p>
+      Official information, activities and important developments
+      from NAICTS FUTMINNA.
+    </p>
+  </section>
+
+  <section>
+
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">LATEST</span>
+        <h2>Updates</h2>
+      </div>
+
+      <div class="search">
+        <span>⌕</span>
+        <input
+          id="search"
+          type="search"
+          placeholder="Search updates…"
+        >
+      </div>
+    </div>
+
+    <div id="updates-list" class="grid">
+      <div class="empty">Loading updates…</div>
+    </div>
+
+  </section>
+
+</main>
+
+<footer>
+
+  <div class="footer-brand">
+    <img src="/assets/naicts-logo.jpg" alt="NAICTS">
+
+    <div>
+      <b>NAICTS INFOHUB</b>
+      <span>
+        Official information hub for NAICTS FUTMINNA.
+      </span>
+    </div>
+  </div>
+
+  <div class="footer-links">
+    <a href="/">Home</a>
+    <a href="/updates.html">Updates</a>
+    <a href="/announcements.html">Announcements</a>
+    <a href="/pro.html">PRO Desk</a>
+    <a href="/events.html">Events</a>
+    <a href="/gallery.html">SICT Gallery</a>
+    <a href="/about.html">About</a>
+  </div>
+
+  <small>© 2026 NAICTS FUTMINNA</small>
+
+</footer>
+
+<div id="toast"></div>
+
+<script>
+const esc = value =>
+  String(value ?? '').replace(/[&<>'"]/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;'
+  }[char]));
+
+const loader = document.getElementById('loader');
+
+window.addEventListener('load', () => {
+  setTimeout(() => loader?.classList.add('hide'), 650);
+});
+
+document.getElementById('menu')?.addEventListener('click', () => {
+  document.getElementById('nav')?.classList.toggle('open');
+});
+
+function renderUpdates(posts) {
+
+  const list = document.getElementById('updates-list');
+
+  const updates = posts.filter(
+    post => !['Announcement', 'PRO'].includes(post.category)
+  );
+
+  if (!updates.length) {
+    list.innerHTML =
+      '<div class="empty">No updates have been published yet.</div>';
+    return;
+  }
+
+  list.innerHTML = updates.map(post => `
+    <article
+      class="card"
+      onclick="location.href='/updates.html?post=${encodeURIComponent(post.slug)}'"
+    >
+
+      <span class="tag">
+        ${esc(post.category || 'Update')}
+      </span>
+
+      <h3>${esc(post.title)}</h3>
+
+      <p>
+        ${esc(post.excerpt || post.content)
+          .replace(/\s+/g, ' ')
+          .slice(0, 160)}
+        ${(post.excerpt || post.content).length > 160 ? '…' : ''}
+      </p>
+
+      <div class="meta">
+        <span>${esc(post.author || 'NAICTS')}</span>
+
+        <span>
+          ${new Date(
+            post.published_at || post.created_at
+          ).toLocaleDateString()}
+        </span>
+      </div>
+
+      <div class="read">Read update →</div>
+
+    </article>
+  `).join('');
+}
+
+async function loadUpdates() {
+
+  try {
+
+    const response = await fetch('/api/public/posts', {
+      headers: {
+        Accept: 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Unable to load updates');
+    }
+
+    const posts = await response.json();
+
+    renderUpdates(posts);
+
+  } catch (error) {
+
+    document.getElementById('updates-list').innerHTML =
+      '<div class="empty">Unable to load updates right now.</div>';
+
+  }
+}
+
+document.getElementById('search')?.addEventListener('input', async event => {
+
+  const query = event.target.value.trim();
+
+  try {
+
+    const response = await fetch(
+      '/api/public/posts?q=' + encodeURIComponent(query),
+      {
+        headers: {
+          Accept: 'application/json'
+        }
+      }
+    );
+
+    if (!response.ok) throw new Error();
+
+    const posts = await response.json();
+
+    renderUpdates(posts);
+
+  } catch {
+
+    document.getElementById('updates-list').innerHTML =
+      '<div class="empty">Search is temporarily unavailable.</div>';
+
+  }
+
+});
+
+loadUpdates();
+</script>
+
+</body>
+</html>

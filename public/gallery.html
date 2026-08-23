@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#001f54">
+  <meta name="description" content="NAICTS FUTMINNA official gallery — photos and visual stories from NAICTS activities.">
+  <title>SICT Gallery | NAICTS INFOHUB</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+<div id="loader" class="loader">
+  <img src="/assets/naicts-logo.jpg" alt="NAICTS">
+  <div class="loader-ring"></div>
+  <strong>NAICTS INFOHUB</strong>
+  <span>Loading gallery…</span>
+</div>
+
+<header class="topbar">
+
+  <a class="brand" href="/">
+    <img src="/assets/naicts-logo.jpg" alt="NAICTS">
+    <span>
+      <b>NAICTS INFOHUB</b>
+      <small>Updates • Announcements • Events</small>
+    </span>
+  </a>
+
+  <button class="menu" id="menu">☰</button>
+
+  <nav id="nav">
+    <a href="/">Home</a>
+    <a href="/updates.html">Updates</a>
+    <a href="/announcements.html">Announcements</a>
+    <a href="/pro.html">PRO Desk</a>
+    <a href="/events.html">Events</a>
+    <a href="/gallery.html">SICT Gallery</a>
+    <a href="/about.html">About</a>
+    <a href="/admin">CMS</a>
+  </nav>
+
+</header>
+
+<main>
+
+<section class="page-hero">
+
+  <span class="eyebrow">NAICTS FUTMINNA</span>
+
+  <h1>
+    SICT
+    <em>Gallery.</em>
+  </h1>
+
+  <p>
+    Official photos and visual stories from NAICTS activities,
+    programmes, events and moments within the SICT community.
+  </p>
+
+</section>
+
+<section>
+
+  <div class="section-head">
+
+    <div>
+      <span class="eyebrow">VISUAL STORIES</span>
+      <h2>Latest Photos</h2>
+    </div>
+
+  </div>
+
+  <div id="gallery" class="gallery-grid">
+    <div class="empty">
+      Loading gallery…
+    </div>
+  </div>
+
+</section>
+
+</main>
+
+<footer>
+
+  <div class="footer-brand">
+
+    <img src="/assets/naicts-logo.jpg" alt="NAICTS">
+
+    <div>
+      <b>NAICTS INFOHUB</b>
+
+      <span>
+        The official information hub for the National Association
+        of Information and Communication Technology Students,
+        FUTMINNA.
+      </span>
+    </div>
+
+  </div>
+
+  <div class="footer-links">
+    <a href="/">Home</a>
+    <a href="/updates.html">Updates</a>
+    <a href="/announcements.html">Announcements</a>
+    <a href="/pro.html">PRO Desk</a>
+    <a href="/events.html">Events</a>
+    <a href="/gallery.html">SICT Gallery</a>
+  </div>
+
+  <small>© 2026 NAICTS FUTMINNA</small>
+
+</footer>
+
+<script>
+
+window.addEventListener('load', () => {
+
+  setTimeout(() => {
+    document.getElementById('loader')?.classList.add('hide');
+  }, 650);
+
+});
+
+document.getElementById('menu')?.addEventListener('click', () => {
+
+  document.getElementById('nav')?.classList.toggle('open');
+
+});
+
+async function loadGallery() {
+
+  const container = document.getElementById('gallery');
+
+  try {
+
+    const response =
+      await fetch('/api/public/gallery');
+
+    if (!response.ok) {
+      throw new Error('Unable to load gallery');
+    }
+
+    const items = await response.json();
+
+    if (!items.length) {
+
+      container.innerHTML = `
+        <div class="empty">
+          <strong>No gallery photos yet.</strong>
+          <br>
+          Official NAICTS photos will appear here.
+        </div>
+      `;
+
+      return;
+    }
+
+    container.innerHTML = items.map(item => `
+
+      <article class="gallery-card">
+
+        <img
+          src="${escapeHtml(item.image)}"
+          alt="${escapeHtml(item.title)}"
+          loading="lazy"
+        >
+
+        <div class="gallery-info">
+
+          <span class="tag">
+            ${escapeHtml(item.category)}
+          </span>
+
+          <h3>
+            ${escapeHtml(item.title)}
+          </h3>
+
+          ${
+            item.description
+              ? `<p>${escapeHtml(item.description)}</p>`
+              : ''
+          }
+
+        </div>
+
+      </article>
+
+    `).join('');
+
+  } catch (error) {
+
+    container.innerHTML = `
+      <div class="empty">
+        Unable to load the gallery right now.
+      </div>
+    `;
+
+    console.error(error);
+
+  }
+
+}
+
+function escapeHtml(value) {
+
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+}
+
+loadGallery();
+
+</script>
+
+</body>
+</html>
