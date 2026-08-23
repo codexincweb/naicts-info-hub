@@ -38,8 +38,19 @@ async function get(url) {
   return d;
 }
 function card(p) {
+  const currentPage =
+    location.pathname.includes('announcements.html')
+      ? '/announcements.html'
+      : location.pathname.includes('pro.html')
+        ? '/pro.html'
+        : '/updates.html';
+
   return `
-    <article class="card" onclick="location.hash='post/${encodeURIComponent(p.slug)}'">
+    <article
+      class="card"
+      onclick="location.href='${currentPage}?post=${encodeURIComponent(p.slug)}'"
+      style="cursor:pointer"
+    >
 
       ${
         p.cover_image
@@ -65,16 +76,11 @@ function card(p) {
 
       <div class="meta">
         <span>${esc(p.author || 'NAICTS')}</span>
-
-        <span>
-          ${new Date(
-            p.published_at || p.created_at
-          ).toLocaleDateString()}
-        </span>
+        <span>${new Date(p.published_at || p.created_at).toLocaleDateString()}</span>
       </div>
 
       <div class="read">
-        Read post →
+        Read more →
       </div>
 
     </article>
@@ -187,30 +193,44 @@ function restoreHome() {
 }
 
 async function route() {
-  const part = location.hash.slice(1);
+  const params = new URLSearchParams(location.search);
+  const querySlug = params.get('post');
 
-  if (part.startsWith('post/')) {
-    const slug = decodeURIComponent(part.slice(5));
+  let slug = querySlug;
 
-    if (!homeSnapshot) {
-      homeSnapshot = document.querySelector('main').innerHTML;
+  if (!slug) {
+    const part = location.hash.slice(1);
+    if (part.startsWith('post/')) {
+      slug = decodeURIComponent(part.slice(5));
     }
+  }
 
+  if (slug) {
     try {
       const p = await get(
         '/api/public/posts/' + encodeURIComponent(slug)
       );
 
+      const backPage =
+        location.pathname.includes('announcements.html')
+          ? '/announcements.html'
+          : location.pathname.includes('pro.html')
+            ? '/pro.html'
+            : '/updates.html';
+
       document.querySelector('main').innerHTML = `
         <section class="detail">
-          <a class="back" href="#home">← Back to INFOHUB</a>
+
+          <a class="back" href="${backPage}">
+            ← Back
+          </a>
 
           <span class="eyebrow">${esc(p.category)}</span>
 
           <h1>${esc(p.title)}</h1>
 
           <p class="meta">
-            <span>${esc(p.author)}</span>
+            <span>${esc(p.author || 'NAICTS')}</span>
             <span>
               ${new Date(
                 p.published_at || p.created_at
@@ -244,13 +264,17 @@ async function route() {
           >
             Share on WhatsApp
           </a>
+
         </section>
       `;
     } catch (e) {
       toast('Post not found');
-      location.hash = 'home';
     }
-  } else {
+
+    return;
+  }
+
+  if (location.pathname === '/' || location.pathname === '/index.html') {
     restoreHome();
   }
 }
