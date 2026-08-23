@@ -316,21 +316,44 @@ function toast(t) {
   }, 2500);
 }
 
-bindHome();
 
-// Initial database requests happen only once.
-Promise.all([
-  loadPosts().catch(() => {
-    toast('Unable to load posts');
-  }),
+async function initializeApp() {
 
-  loadEvents().catch(() => {
-    toast('Unable to load events');
-  })
-]);
+  const path = location.pathname;
+  const params = new URLSearchParams(location.search);
+  const postSlug = params.get('post');
+
+  if (postSlug) {
+    await route();
+    return;
+  }
+
+  if (path === '/' || path === '/index.html') {
+
+    bindHome();
+
+    await Promise.all([
+      loadPosts().catch(() => {
+        toast('Unable to load posts');
+      }),
+
+      loadEvents().catch(() => {
+        toast('Unable to load events');
+      })
+    ]);
+
+    await route();
+
+    return;
+  }
+
+  bindHome();
+}
 
 window.addEventListener('hashchange', () => {
   route().catch(console.error);
 });
 
-route().catch(console.error);
+initializeApp().catch(error => {
+  console.error('Application initialization failed:', error);
+});
