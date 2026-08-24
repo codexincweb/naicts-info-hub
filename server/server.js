@@ -164,4 +164,14 @@ app.get('/api/admin/stats',auth,staff,async(req,res)=>{const [a,b,c,d,e]=await P
 app.get('/admin',(req,res)=>res.sendFile(path.join(PUBLIC,'admin.html')));
 app.use((req,res,next)=>{ if(req.method==='GET' && !req.path.startsWith('/api/')) return res.sendFile(path.join(PUBLIC,'index.html')); next(); });
 
-(async()=>{ try { await migrate(); app.listen(PORT, '0.0.0.0', ()=>console.log(`NAICTS INFOHUB running on port ${PORT}`)); } catch(err) { console.error('Startup failed:',err.message); process.exit(1); } })();
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`NAICTS INFOHUB running on port ${PORT}`);
+
+  migrate()
+    .then(() => {
+      console.log('Migration ok');
+    })
+    .catch(err => {
+      console.error('Migration failed:', err.message);
+    });
+});
