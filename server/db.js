@@ -22,7 +22,7 @@ const pool = new Pool({
 
   idleTimeoutMillis: 5000,
 
-  connectionTimeoutMillis: 15000,
+  connectionTimeoutMillis: 8000,
 
   keepAlive: true,
 
