@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { query, migrate } = require('./db');
@@ -42,7 +43,8 @@ function cleanContent(value) { return String(value || '').trim(); }
 
 app.get('/api/health', async (req, res) => { try { await query('SELECT 1'); res.json({ ok: true, name: 'NAICTS INFOHUB', database: 'postgresql', media: hasCloudinary ? 'cloudinary' : 'not_configured', time: now() }); } catch { res.status(503).json({ ok: false, error: 'Database unavailable' }); } });
 
-app.post('/api/auth/login', async (req, res) => {
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many login attempts. Please try again later.' } });
+app.post('/api/auth/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
   const r = await query('SELECT * FROM users WHERE LOWER(email)=LOWER($1)', [email]);
