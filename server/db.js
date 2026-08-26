@@ -11,7 +11,6 @@ if (!connectionString) {
 
 const pool = new Pool({
   connectionString,
-  options: '-c search_path=public',
 
   ssl: process.env.DATABASE_SSL === 'true'
     ? { rejectUnauthorized: false }
