@@ -12,9 +12,9 @@ if (!connectionString) {
 const pool = new Pool({
   connectionString,
 
-  ssl: process.env.DATABASE_SSL === 'true'
-    ? { rejectUnauthorized: false }
-    : false,
+  ssl: {
+    rejectUnauthorized: false
+  },
 
   max: 3,
 
