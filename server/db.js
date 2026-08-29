@@ -1,7 +1,9 @@
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 
-const connectionString = process.env.DATABASE_URL;
+const connectionString = process.env.DATABASE_URL
+  ?.replace(/[?&]sslmode=[^&]*/i, '')
+  .replace(/[?&]channel_binding=[^&]*/i, '');
 
 if (!connectionString) {
   throw new Error(
