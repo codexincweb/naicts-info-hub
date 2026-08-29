@@ -7,6 +7,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const multer = require('multer');
+const { fileTypeFromBuffer } = require('file-type');
 const cloudinary = require('cloudinary').v2;
 const { query, migrate } = require('./db');
 
@@ -19,14 +20,24 @@ const PUBLIC = path.join(ROOT, 'public');
 
 app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors());
+app.use(cors({ origin: process.env.CORS_ORIGIN || false }));
 app.use(express.json({ limit: '3mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(express.static(PUBLIC));
 
 const hasCloudinary = Boolean(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
 if (hasCloudinary) cloudinary.config({ cloud_name: process.env.CLOUDINARY_CLOUD_NAME, api_key: process.env.CLOUDINARY_API_KEY, api_secret: process.env.CLOUDINARY_API_SECRET });
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: (req, file, cb) => cb(null, /^image\/(jpeg|png|webp|gif)$/.test(file.mimetype)) });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+    files: 1
+  },
+  fileFilter: (req, file, cb) => {
+    const allowed = /^image\/(jpeg|png|webp|gif)$/.test(file.mimetype);
+    cb(null, allowed);
+  }
+});
 
 const now = () => new Date().toISOString();
 const slugify = s => String(s).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 90);
@@ -38,7 +49,24 @@ function auth(req, res, next) {
   catch { return res.status(401).json({ error: 'Invalid or expired session' }); }
 }
 function staff(req, res, next) { if (!['super_admin','admin','pro','editor'].includes(req.user.role)) return res.status(403).json({ error: 'Staff access required' }); next(); }
-function canPublish(role) { return ['super_admin','admin','pro'].includes(role); }
+function canPublish(role) {
+  return ['super_admin','admin','pro'].includes(role);
+}
+function canDelete(role) {
+  return ['super_admin','admin','pro'].includes(role);
+}
+function requirePublisher(req, res, next) {
+  if (!canPublish(req.user.role)) {
+    return res.status(403).json({ error: 'Publishing permission required' });
+  }
+  next();
+}
+function requireDeletePermission(req, res, next) {
+  if (!canDelete(req.user.role)) {
+    return res.status(403).json({ error: 'Delete permission required' });
+  }
+  next();
+}
 function cleanContent(value) { return String(value || '').trim(); }
 
 app.get('/api/health', async (req, res) => { try { await query('SELECT 1'); res.json({ ok: true, name: 'NAICTS INFOHUB', database: 'postgresql', media: hasCloudinary ? 'cloudinary' : 'not_configured', time: now() }); } catch { res.status(503).json({ ok: false, error: 'Database unavailable' }); } });
@@ -87,22 +115,22 @@ app.get('/api/admin/posts', auth, staff, async (req,res) => { const r=await quer
 app.post('/api/admin/posts', auth, staff, async (req,res) => {
   let { title, excerpt='', content, category='News', author, status='draft', featured=false, cover_image='' } = req.body || {};
   if (!title || !content) return res.status(400).json({ error: 'Title and content are required' });
-  if (status === 'published' && !canPublish(req.user.role)) status = 'review';
+  if (status === 'published' && !canPublish(req.user.role)) return res.status(403).json({ error: 'Publishing permission required' });
   let slug = slugify(title); const exists = await query('SELECT id FROM posts WHERE slug=$1',[slug]); if (exists.rowCount) slug += '-' + Date.now();
   const r = await query(`INSERT INTO posts(title,slug,excerpt,content,category,cover_image,author,status,featured,published_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,CASE WHEN $8='published' THEN NOW() ELSE NULL END) RETURNING *`, [title,slug,excerpt,cleanContent(content),category,cover_image,author||req.user.name,status,Boolean(featured)]);
   res.status(201).json(r.rows[0]);
 });
 app.put('/api/admin/posts/:id', auth, staff, async (req,res) => {
   const old = await query('SELECT * FROM posts WHERE id=$1',[req.params.id]); if(!old.rowCount) return res.status(404).json({error:'Post not found'});
-  const p=old.rows[0], b=req.body||{}; let status=b.status||p.status; if(status==='published'&&!canPublish(req.user.role)) status='review'; let slug=slugify(b.title||p.title); const same=await query('SELECT id FROM posts WHERE slug=$1 AND id<>$2',[slug,p.id]); if(same.rowCount) slug+='-'+p.id;
+  const p=old.rows[0], b=req.body||{}; let status=b.status||p.status; if(status==='published'&&!canPublish(req.user.role)) return res.status(403).json({error:'Publishing permission required'}); let slug=slugify(b.title||p.title); const same=await query('SELECT id FROM posts WHERE slug=$1 AND id<>$2',[slug,p.id]); if(same.rowCount) slug+='-'+p.id;
   const published=status==='published'?(p.published_at||now()):null;
   const r=await query(`UPDATE posts SET title=$1,slug=$2,excerpt=$3,content=$4,category=$5,cover_image=$6,author=$7,status=$8,featured=$9,published_at=$10,updated_at=NOW() WHERE id=$11 RETURNING *`,[b.title||p.title,slug,b.excerpt??p.excerpt,cleanContent(b.content ?? p.content),b.category||p.category,b.cover_image??p.cover_image,b.author||p.author,status,Boolean(b.featured),published,p.id]); res.json(r.rows[0]);
 });
-app.delete('/api/admin/posts/:id',auth,staff,async(req,res)=>{const r=await query('DELETE FROM posts WHERE id=$1',[req.params.id]);res.json({ok:r.rowCount>0});});
+app.delete('/api/admin/posts/:id',auth,staff,requireDeletePermission,async(req,res)=>{const r=await query('DELETE FROM posts WHERE id=$1',[req.params.id]);res.json({ok:r.rowCount>0});});
 
 app.get('/api/admin/events', auth, staff, async(req,res)=>{const r=await query('SELECT * FROM events ORDER BY date ASC');res.json(r.rows);});
 app.post('/api/admin/events', auth, staff, async(req,res)=>{const b=req.body||{};if(!b.title||!b.date)return res.status(400).json({error:'Title and date are required'});let slug=slugify(b.title);const e=await query('SELECT id FROM events WHERE slug=$1',[slug]);if(e.rowCount)slug+='-'+Date.now();const r=await query('INSERT INTO events(title,slug,description,date,time,venue,image) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *',[b.title,slug,b.description||'',b.date,b.time||'',b.venue||'',b.image||'']);res.status(201).json(r.rows[0]);});
-app.delete('/api/admin/events/:id', auth, staff, async(req,res)=>{const r=await query('DELETE FROM events WHERE id=$1',[req.params.id]);res.json({ok:r.rowCount>0});});
+app.delete('/api/admin/events/:id', auth, staff, requireDeletePermission, async(req,res)=>{const r=await query('DELETE FROM events WHERE id=$1',[req.params.id]);res.json({ok:r.rowCount>0});});
 app.get('/api/public/gallery', async (req,res) => {
   const r = await query(
     'SELECT * FROM gallery ORDER BY created_at DESC'
@@ -142,7 +170,7 @@ app.post('/api/admin/gallery', auth, staff, async (req,res) => {
   res.status(201).json(r.rows[0]);
 });
 
-app.delete('/api/admin/gallery/:id', auth, staff, async (req,res) => {
+app.delete('/api/admin/gallery/:id', auth, staff, requireDeletePermission, async (req,res) => {
   const r = await query(
     'DELETE FROM gallery WHERE id=$1',
     [req.params.id]
@@ -155,11 +183,34 @@ app.delete('/api/admin/gallery/:id', auth, staff, async (req,res) => {
 
 app.post('/api/admin/upload', auth, staff, upload.single('image'), async (req,res) => {
   if (!req.file) return res.status(400).json({ error: 'Valid image required' });
-  if (!hasCloudinary) return res.status(503).json({ error: 'Media storage is not configured. Add Cloudinary credentials to the environment.' });
+  if (!hasCloudinary) return res.status(503).json({ error: 'Media storage is not configured.' });
+
   try {
-    const result = await new Promise((resolve,reject)=>{ const stream=cloudinary.uploader.upload_stream({folder:'naicts-infohub'},(err,r)=>err?reject(err):resolve(r)); stream.end(req.file.buffer); });
-    res.json({ url: result.secure_url, public_id: result.public_id });
-  } catch { res.status(502).json({ error: 'Image storage upload failed' }); }
+    const detected = await fileTypeFromBuffer(req.file.buffer);
+    const allowedTypes = new Set(['jpg', 'png', 'webp', 'gif']);
+
+    if (!detected || !allowedTypes.has(detected.ext)) {
+      return res.status(400).json({ error: 'Invalid or unsupported image file' });
+    }
+
+    const result = await new Promise((resolve,reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'naicts-infohub',
+          resource_type: 'image'
+        },
+        (err,r) => err ? reject(err) : resolve(r)
+      );
+      stream.end(req.file.buffer);
+    });
+
+    res.json({
+      url: result.secure_url,
+      public_id: result.public_id
+    });
+  } catch {
+    res.status(502).json({ error: 'Image storage upload failed' });
+  }
 });
 app.get('/api/admin/stats',auth,staff,async(req,res)=>{const [a,b,c,d,e]=await Promise.all([query('SELECT COUNT(*)::int c FROM posts'),query("SELECT COUNT(*)::int c FROM posts WHERE status='published'"),query("SELECT COUNT(*)::int c FROM posts WHERE status<>'published'"),query('SELECT COALESCE(SUM(views),0)::bigint c FROM posts'),query('SELECT COUNT(*)::int c FROM events')]);res.json({posts:a.rows[0].c,published:b.rows[0].c,drafts:c.rows[0].c,views:d.rows[0].c,events:e.rows[0].c});});
 
