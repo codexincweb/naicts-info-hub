@@ -85,3 +85,137 @@
   }
 
 }
+
+/* About page background */
+body:has(.page-hero) {
+  position: relative;
+  isolation: isolate;
+}
+
+body:has(.page-hero)::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: url("/assets/building.png") center / cover no-repeat;
+  filter: blur(8px);
+  transform: scale(1.08);
+  opacity: 0.18;
+  z-index: -2;
+  pointer-events: none;
+}
+
+body:has(.page-hero)::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.82);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.about-card,
+.card,
+.soft {
+  position: relative;
+  backdrop-filter: blur(6px);
+}
+
+/* ================================
+   PROFESSIONAL HOVER EFFECTS
+   ================================ */
+
+.topbar nav a {
+  position: relative;
+  transition: color .25s ease, transform .25s ease;
+}
+
+.topbar nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 0;
+  height: 2px;
+  background: currentColor;
+  transition: width .25s ease;
+}
+
+.topbar nav a:hover {
+  transform: translateY(-1px);
+}
+
+.topbar nav a:hover::after,
+.topbar nav a.active::after {
+  width: 100%;
+}
+
+.about-card,
+.card {
+  transition:
+    transform .3s ease,
+    box-shadow .3s ease,
+    border-color .3s ease;
+}
+
+.about-card:hover,
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 35px rgba(0, 31, 84, .12);
+}
+
+.about-card:hover h2,
+.card:hover h3 {
+  transform: translateX(2px);
+}
+
+.about-card h2,
+.card h3 {
+  transition: transform .25s ease;
+}
+
+.footer-links a {
+  transition: color .25s ease, transform .25s ease;
+}
+
+.footer-links a:hover {
+  transform: translateX(3px);
+}
+
+.brand {
+  transition: transform .25s ease;
+}
+
+.brand:hover {
+  transform: translateY(-1px);
+}
+
+.brand img,
+.footer-brand img {
+  transition: transform .3s ease;
+}
+
+.brand:hover img {
+  transform: scale(1.05);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topbar nav a,
+  .topbar nav a::after,
+  .about-card,
+  .card,
+  .about-card h2,
+  .card h3,
+  .footer-links a,
+  .brand,
+  .brand img {
+    transition: none;
+  }
+
+  .about-card:hover,
+  .card:hover,
+  .brand:hover,
+  .footer-links a:hover,
+  .topbar nav a:hover {
+    transform: none;
+  }
+}
