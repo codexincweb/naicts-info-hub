@@ -222,3 +222,38 @@ body.about-page .card {
   background: rgba(255,255,255,.88);
   backdrop-filter: blur(10px);
 }
+
+/* FINAL ABOUT BACKGROUND */
+body.about-page {
+  background: transparent !important;
+}
+
+body.about-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("/assets/building.png");
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  filter: blur(3px);
+  transform: scale(1.03);
+  opacity: 0.65;
+  z-index: -10;
+  pointer-events: none;
+}
+
+body.about-page::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.20);
+  z-index: -9;
+  pointer-events: none;
+}
+
+body.about-page main,
+body.about-page footer {
+  position: relative;
+  z-index: 1;
+}
