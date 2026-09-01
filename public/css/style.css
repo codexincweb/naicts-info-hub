@@ -86,40 +86,6 @@
 
 }
 
-/* About page background */
-body:has(.page-hero) {
-  position: relative;
-  isolation: isolate;
-}
-
-body:has(.page-hero)::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: url("/assets/building.png") center / cover no-repeat;
-  filter: blur(8px);
-  transform: scale(1.08);
-  opacity: 0.18;
-  z-index: -2;
-  pointer-events: none;
-}
-
-body:has(.page-hero)::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.82);
-  z-index: -1;
-  pointer-events: none;
-}
-
-.about-card,
-.card,
-.soft {
-  position: relative;
-  backdrop-filter: blur(6px);
-}
-
 /* ================================
    PROFESSIONAL HOVER EFFECTS
    ================================ */
@@ -218,4 +184,41 @@ body:has(.page-hero)::after {
   .topbar nav a:hover {
     transform: none;
   }
+}
+
+/* ================================
+   ABOUT PAGE BACKGROUND
+================================ */
+
+body.about-page {
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+}
+
+body.about-page::before {
+  content: "";
+  position: fixed;
+  inset: -25px;
+  background: url("/assets/building.png") center center / cover no-repeat;
+  filter: blur(10px);
+  transform: scale(1.05);
+  opacity: .30;
+  z-index: -2;
+  pointer-events: none;
+}
+
+body.about-page::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,.68);
+  z-index: -1;
+  pointer-events: none;
+}
+
+body.about-page .about-card,
+body.about-page .card {
+  background: rgba(255,255,255,.88);
+  backdrop-filter: blur(8px);
 }
