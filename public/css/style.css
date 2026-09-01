@@ -238,7 +238,7 @@ body.about-page::before {
   background-repeat: no-repeat;
   filter: blur(3px);
   transform: scale(1.03);
-  opacity: 0.65;
+  opacity: 0.85;
   z-index: -10;
   pointer-events: none;
 }
