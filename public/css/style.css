@@ -424,3 +424,96 @@ body.about-page .soft .card:hover {
   }
 }
 
+
+
+/* =========================================
+   HOMEPAGE HERO PANEL — PROFESSIONAL REDESIGN
+========================================= */
+
+.hero-panel{
+  min-height:330px;
+  padding:42px 38px;
+  border-radius:26px;
+  background:linear-gradient(145deg,#001f54,#0a3e85);
+  box-shadow:0 20px 55px rgba(0,31,84,.16);
+  text-align:center;
+  overflow:hidden;
+}
+
+.hero-panel:before{
+  width:380px;
+  height:380px;
+  border-color:rgba(255,255,255,.09);
+}
+
+.hero-panel img{
+  width:82px;
+  height:82px;
+  object-fit:contain;
+  border-radius:8px;
+  z-index:1;
+  box-shadow:0 8px 25px rgba(0,0,0,.12);
+}
+
+.hero-panel span{
+  margin-top:20px;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#c8d9f1;
+  z-index:1;
+}
+
+.hero-panel strong{
+  display:block;
+  max-width:430px;
+  margin-top:10px;
+  font-size:clamp(24px,3vw,34px);
+  line-height:1.12;
+  letter-spacing:-.035em;
+  z-index:1;
+}
+
+.hero-panel small{
+  display:block;
+  max-width:440px;
+  margin-top:13px;
+  color:#c4d5ed;
+  font-size:13px;
+  line-height:1.6;
+  z-index:1;
+}
+
+/* Mobile refinement */
+@media(max-width:850px){
+
+  .hero-panel{
+    min-height:0;
+    padding:34px 24px 36px;
+    border-radius:22px;
+  }
+
+  .hero-panel img{
+    width:68px;
+    height:68px;
+  }
+
+  .hero-panel span{
+    margin-top:16px;
+    font-size:10px;
+  }
+
+  .hero-panel strong{
+    max-width:340px;
+    font-size:25px;
+    line-height:1.18;
+  }
+
+  .hero-panel small{
+    max-width:360px;
+    font-size:12px;
+    line-height:1.55;
+  }
+
+}
