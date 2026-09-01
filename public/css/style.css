@@ -201,9 +201,9 @@ body.about-page::before {
   position: fixed;
   inset: -25px;
   background: url("/assets/building.png") center center / cover no-repeat;
-  filter: blur(10px);
+  filter: blur(7px);
   transform: scale(1.05);
-  opacity: .30;
+  opacity: .10;
   z-index: -2;
   pointer-events: none;
 }
