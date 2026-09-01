@@ -201,9 +201,9 @@ body.about-page::before {
   position: fixed;
   inset: -25px;
   background: url("/assets/building.png") center center / cover no-repeat;
-  filter: blur(15px);
+  filter: blur(30px);
   transform: scale(1.05);
-  opacity: .50;
+  opacity: .80;
   z-index: -2;
   pointer-events: none;
 }
@@ -220,5 +220,5 @@ body.about-page::after {
 body.about-page .about-card,
 body.about-page .card {
   background: rgba(255,255,255,.88);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px);
 }
