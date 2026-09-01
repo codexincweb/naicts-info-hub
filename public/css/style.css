@@ -257,3 +257,170 @@ body.about-page footer {
   position: relative;
   z-index: 1;
 }
+
+/* =================================================
+   FINAL PROFESSIONAL ABOUT PAGE LAYOUT
+================================================= */
+
+body.about-page .page-hero {
+  max-width: 1100px;
+  margin: 35px auto 10px;
+  padding: 65px 40px 55px;
+  border: 1px solid rgba(255,255,255,.55);
+  border-radius: 28px;
+  background: rgba(255,255,255,.60);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 20px 60px rgba(0,31,84,.08);
+}
+
+body.about-page .page-hero h1 {
+  max-width: 850px;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+body.about-page .page-hero p {
+  max-width: 700px;
+  color: #40536d;
+}
+
+/* About information cards */
+body.about-page .about-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+body.about-page .about-card {
+  padding: 32px;
+  border: 1px solid rgba(255,255,255,.70);
+  border-radius: 24px;
+  background: rgba(255,255,255,.90);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 15px 45px rgba(0,31,84,.10);
+}
+
+body.about-page .about-card h2 {
+  margin: 14px 0 16px;
+  font-size: clamp(27px, 3vw, 38px);
+  line-height: 1.12;
+  letter-spacing: -.04em;
+}
+
+body.about-page .about-card p {
+  margin: 0 0 18px;
+  color: #52647b;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+body.about-page .about-card p:last-child {
+  margin-bottom: 0;
+}
+
+/* Why INFOHUB section */
+body.about-page .soft {
+  margin-top: 20px;
+  background: rgba(246,249,253,.72);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+body.about-page .soft .grid {
+  max-width: 1100px;
+}
+
+body.about-page .soft .card {
+  background: rgba(255,255,255,.92);
+}
+
+/* Hover polish */
+body.about-page .about-card:hover,
+body.about-page .soft .card:hover {
+  transform: translateY(-7px);
+  box-shadow: 0 20px 50px rgba(0,31,84,.15);
+  border-color: rgba(11,94,215,.18);
+}
+
+/* Mobile */
+@media (max-width: 850px) {
+
+  body.about-page .page-hero {
+    margin: 18px 16px 0;
+    padding: 42px 24px 38px;
+    border-radius: 22px;
+  }
+
+  body.about-page .page-hero h1 {
+    font-size: clamp(36px, 9vw, 52px);
+    line-height: 1.04;
+  }
+
+  body.about-page .page-hero p {
+    font-size: 16px;
+    line-height: 1.7;
+  }
+
+  body.about-page section {
+    padding: 48px 16px;
+  }
+
+  body.about-page .about-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  body.about-page .about-card {
+    padding: 25px 22px;
+    border-radius: 20px;
+  }
+
+  body.about-page .about-card h2 {
+    font-size: 28px;
+  }
+
+  body.about-page .about-card p {
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  body.about-page .soft {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  body.about-page .section-head h2 {
+    font-size: 30px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+
+  body.about-page .page-hero {
+    margin-left: 12px;
+    margin-right: 12px;
+    padding: 34px 20px;
+  }
+
+  body.about-page .page-hero h1 {
+    font-size: 36px;
+  }
+
+  body.about-page .about-card {
+    padding: 22px 19px;
+  }
+
+  body.about-page .about-card h2 {
+    font-size: 25px;
+  }
+
+  body.about-page .about-card p {
+    font-size: 13.5px;
+  }
+}
+
