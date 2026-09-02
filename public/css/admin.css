@@ -65,3 +65,44 @@
     height: 220px;
   }
 }
+
+
+/* =========================
+   PROFESSIONAL LOGIN ERROR
+========================= */
+
+.login-error {
+  margin-top: 16px;
+  padding: 13px 15px;
+  border: 1px solid rgba(190, 30, 45, .25);
+  border-left: 4px solid #b91c1c;
+  border-radius: 10px;
+  background: #fff1f2;
+  color: #991b1b;
+  text-align: left;
+  line-height: 1.45;
+}
+
+.login-error strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.login-error span {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  color: #b91c1c;
+}
+
+
+/* Prevent dashboard flash before authentication check */
+
+body:has(#dashboard) {
+  visibility: hidden;
+}
+
+body:has(#dashboard.auth-ready) {
+  visibility: visible;
+}

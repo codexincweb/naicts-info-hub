@@ -41,91 +41,173 @@ const api = async (url, options = {}) => {
    AUTHENTICATION
 ========================= */
 
-async function showDash() {
-  $('#login').hidden = false;
-  $('#dashboard').hidden = true;
+const isDashboardPage =
+  window.location.pathname === '/admin/dashboard.html';
+
+async function verifySession() {
 
   if (!token || !user) {
-    return;
+    if (isDashboardPage) {
+      window.location.replace('/admin');
+    }
+    return false;
   }
 
   try {
+
     const me = await api('/api/auth/me');
 
     user = me.user;
-    localStorage.setItem('naicts_user', JSON.stringify(user));
 
-    $('#login').hidden = true;
-    $('#dashboard').hidden = false;
+    localStorage.setItem(
+      'naicts_user',
+      JSON.stringify(user)
+    );
 
-    $('#userRole').innerHTML =
-      `<span class="role">${esc(user.role)}</span>`;
-
-    view('overview');
+    return true;
 
   } catch (error) {
+
     token = null;
     user = null;
 
     localStorage.removeItem('naicts_token');
     localStorage.removeItem('naicts_user');
 
-    $('#login').hidden = false;
-    $('#dashboard').hidden = true;
+    if (isDashboardPage) {
+      window.location.replace('/admin');
+    }
+
+    return false;
   }
 }
 
-$('#loginForm').onsubmit = async e => {
-  e.preventDefault();
 
-  const error = $('#loginError');
-  const button = e.target.querySelector('button');
+/* =========================
+   LOGIN PAGE
+========================= */
 
-  error.textContent = '';
-  button.disabled = true;
-  button.textContent = 'Signing in...';
+const loginForm = $('#loginForm');
 
-  try {
-    const data = await api('/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        email: $('#email').value.trim(),
-        password: $('#password').value
-      })
-    });
+if (loginForm) {
 
-    token = data.token;
-    user = data.user;
+  /*
+   * If an existing session is valid,
+   * don't show the login page again.
+   */
+  (async () => {
 
-    localStorage.setItem('naicts_token', token);
-    localStorage.setItem('naicts_user', JSON.stringify(user));
+    if (token && user) {
 
-    showDash();
+      const valid = await verifySession();
 
-  } catch (error) {
-    error.textContent =
-      error.name === 'AbortError'
-        ? 'The server is taking too long to respond. Please try again.'
-        : error.message;
+      if (valid) {
+        window.location.replace('/admin/dashboard.html');
+        return;
+      }
 
-  } finally {
-    button.disabled = false;
-    button.textContent = 'Sign in';
-  }
-};
+    }
 
-$('#logout').onclick = () => {
-  localStorage.removeItem('naicts_token');
-  localStorage.removeItem('naicts_user');
+  })();
 
-  token = null;
-  user = null;
 
-  location.reload();
-};
+  loginForm.onsubmit = async e => {
+
+    e.preventDefault();
+
+    const errorBox = $('#loginError');
+    const button = loginForm.querySelector('button');
+
+    errorBox.hidden = true;
+    errorBox.innerHTML = '';
+
+    button.disabled = true;
+    button.textContent = 'Signing in...';
+
+    try {
+
+      const data = await api('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: $('#email').value.trim(),
+          password: $('#password').value
+        })
+      });
+
+      token = data.token;
+      user = data.user;
+
+      localStorage.setItem(
+        'naicts_token',
+        token
+      );
+
+      localStorage.setItem(
+        'naicts_user',
+        JSON.stringify(user)
+      );
+
+      /*
+       * Dashboard is now a completely separate page.
+       */
+      window.location.replace('/admin/dashboard.html');
+
+    } catch (err) {
+
+      errorBox.hidden = false;
+
+      errorBox.innerHTML = `
+        <strong>Unauthorized access detected</strong>
+        <span>Input the right credentials to continue.</span>
+      `;
+
+    } finally {
+
+      button.disabled = false;
+      button.textContent = 'Sign in';
+
+    }
+  };
+
+}
+
+
+/* =========================
+   DASHBOARD AUTHENTICATION
+========================= */
+
+if (isDashboardPage) {
+
+  (async () => {
+
+    const valid = await verifySession();
+
+    if (!valid) return;
+
+    $('#userRole').innerHTML =
+      `<span class="role">${esc(user.role)}</span>`;
+
+    view('overview');
+
+  })();
+
+
+  $('#logout').onclick = () => {
+
+    localStorage.removeItem('naicts_token');
+    localStorage.removeItem('naicts_user');
+
+    token = null;
+    user = null;
+
+    window.location.replace('/admin');
+
+  };
+
+}
 
 
 /* =========================
