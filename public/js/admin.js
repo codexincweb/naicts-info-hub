@@ -187,6 +187,10 @@ if (isDashboardPage) {
 
     if (!valid) return;
 
+    /* Reveal dashboard only after session verification succeeds */
+    $('#dashboard').hidden = false;
+    document.body.classList.add('auth-ready');
+
     $('#userRole').innerHTML =
       `<span class="role">${esc(user.role)}</span>`;
 
