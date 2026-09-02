@@ -552,10 +552,10 @@ function newPost(post = {}) {
           <select name="category">
 
             <option
-              value="News"
-              ${post.category === 'News' || !post.category ? 'selected' : ''}
+              value="Updates"
+              ${post.category === 'Updates' || !post.category ? 'selected' : ''}
             >
-              News
+              Updates
             </option>
 
             <option
