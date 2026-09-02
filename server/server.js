@@ -23,6 +23,12 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({ origin: process.env.CORS_ORIGIN || false }));
 app.use(express.json({ limit: '3mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.get('/admin/dashboard.html', adminPageAuth, staff, (req, res) => {
+  res.sendFile(
+    path.join(__dirname, '../public/admin/dashboard.html')
+  );
+});
+
 app.use(express.static(PUBLIC));
 
 const hasCloudinary = Boolean(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
@@ -42,6 +48,38 @@ const upload = multer({
 const now = () => new Date().toISOString();
 const slugify = s => String(s).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 90);
 const publicStatuses = ['published'];
+function getNaictsTokenFromCookie(req) {
+  const cookies = req.headers.cookie || '';
+  const match = cookies.match(/(?:^|;\\s*)naicts_token=([^;]+)/);
+  if (!match) return null;
+
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return null;
+  }
+}
+
+function adminPageAuth(req, res, next) {
+  const header = req.headers.authorization || '';
+  const bearer = header.startsWith('Bearer ')
+    ? header.slice(7)
+    : null;
+
+  const token = bearer || getNaictsTokenFromCookie(req);
+
+  if (!token) {
+    return res.redirect('/admin/');
+  }
+
+  try {
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    next();
+  } catch {
+    return res.redirect('/admin/');
+  }
+}
+
 function auth(req, res, next) {
   const h = req.headers.authorization || '';
   if (!h.startsWith('Bearer ')) return res.status(401).json({ error: 'Authentication required' });
@@ -79,7 +117,26 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
   const u = r.rows[0];
   if (!u || !(await bcrypt.compare(password, u.password_hash))) return res.status(401).json({ error: 'Invalid email or password' });
   const token = jwt.sign({ id: u.id, name: u.name, email: u.email, role: u.role }, process.env.JWT_SECRET, { expiresIn: '8h' });
+  res.cookie('naicts_token', token, {
+    httpOnly: true,
+    secure: req.secure,
+    sameSite: 'lax',
+    maxAge: 8 * 60 * 60 * 1000,
+    path: '/'
+  });
+
   res.json({ token, user: { id: u.id, name: u.name, email: u.email, role: u.role } });
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  res.clearCookie('naicts_token', {
+    httpOnly: true,
+    secure: req.secure,
+    sameSite: 'lax',
+    path: '/'
+  });
+
+  res.json({ ok: true });
 });
 
 app.get('/api/auth/me', auth, async (req, res) => {

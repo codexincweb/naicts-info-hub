@@ -199,7 +199,14 @@ if (isDashboardPage) {
   })();
 
 
-  $('#logout').onclick = () => {
+  $('#logout').onclick = async () => {
+
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'same-origin'
+      });
+    } catch {}
 
     localStorage.removeItem('naicts_token');
     localStorage.removeItem('naicts_user');
@@ -207,8 +214,7 @@ if (isDashboardPage) {
     token = null;
     user = null;
 
-    window.location.replace('/admin');
-
+    window.location.replace('/admin/');
   };
 
 }

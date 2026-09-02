@@ -97,12 +97,3 @@
 }
 
 
-/* Prevent dashboard flash before authentication check */
-
-body:has(#dashboard) {
-  visibility: hidden;
-}
-
-body:has(#dashboard.auth-ready) {
-  visibility: visible;
-}
