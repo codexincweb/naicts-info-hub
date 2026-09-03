@@ -517,3 +517,130 @@ body.about-page .soft .card:hover {
   }
 
 }
+
+
+/* ============================================================
+   VISIT OTHER RESOURCES
+============================================================ */
+
+.visit-other-resources {
+  padding: 72px 20px;
+}
+
+.resources-container {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+}
+
+.resources-heading {
+  max-width: 720px;
+  margin: 0 auto 30px;
+  text-align: center;
+}
+
+.resources-heading .eyebrow {
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.resources-heading h2 {
+  margin: 0 0 12px;
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1.15;
+}
+
+.resources-heading p {
+  margin: 0;
+  color: #68778d;
+  line-height: 1.7;
+}
+
+.resource-card {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 26px 28px;
+  border: 1px solid rgba(0, 31, 84, .10);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 12px 35px rgba(0, 31, 84, .08);
+  text-decoration: none;
+  color: inherit;
+  transition:
+    transform .25s ease,
+    box-shadow .25s ease,
+    border-color .25s ease;
+}
+
+.resource-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0, 31, 84, .22);
+  box-shadow: 0 18px 42px rgba(0, 31, 84, .13);
+}
+
+.resource-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.resource-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  color: #6b7b91;
+}
+
+.resource-content h3 {
+  margin: 0 0 7px;
+  font-size: 19px;
+  line-height: 1.35;
+}
+
+.resource-content p {
+  margin: 0;
+  color: #68778d;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.resource-arrow {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 800;
+  color: #001f54;
+}
+
+.footer-student-tools {
+  margin-top: 24px;
+}
+
+.footer-student-tools h3 {
+  margin: 0 0 10px;
+}
+
+.footer-student-tools a {
+  display: inline-block;
+  text-decoration: none;
+}
+
+@media (max-width: 650px) {
+
+  .visit-other-resources {
+    padding: 55px 16px;
+  }
+
+  .resource-card {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+    padding: 22px;
+  }
+
+  .resource-arrow {
+    white-space: normal;
+  }
+}
+
