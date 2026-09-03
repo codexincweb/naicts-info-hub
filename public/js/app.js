@@ -363,55 +363,47 @@ initializeApp().catch(error => {
    STUDENT RESOURCE VIEWER
 ============================================================ */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
 
-  const viewer = document.getElementById('resourceViewer');
-  const frame = document.getElementById('resourceFrame');
+  const viewer = document.getElementById("resourceViewer");
+  const frame = document.getElementById("resourceFrame");
 
-  if (!viewer) return;
+  if (!viewer || !frame) return;
 
-  const openResource = (event) => {
+  document.querySelectorAll('[data-resource="timetable"]').forEach(link => {
 
-    if (event) {
+    link.addEventListener("click", event => {
       event.preventDefault();
       event.stopPropagation();
-    }
 
-    viewer.hidden = false;
-    document.body.classList.add('resource-viewer-open');
+      viewer.hidden = false;
+      document.body.classList.add("resource-viewer-open");
 
-    if (frame) {
-      frame.src = 'https://studentstimetableplannerv1.vercel.app/';
-    }
-  };
+      frame.src = "https://studentstimetableplannerv1.vercel.app/";
+    });
 
-  const closeResource = (event) => {
+  });
 
-    if (event) {
+  viewer.querySelectorAll("[data-resource-close]").forEach(control => {
+
+    control.addEventListener("click", event => {
       event.preventDefault();
       event.stopPropagation();
-    }
 
-    viewer.hidden = true;
-    document.body.classList.remove('resource-viewer-open');
-  };
+      viewer.hidden = true;
+      document.body.classList.remove("resource-viewer-open");
 
-  document
-    .querySelectorAll('[data-resource="timetable"]')
-    .forEach(element => {
-      element.addEventListener('click', openResource);
+      frame.src = "about:blank";
     });
 
-  viewer
-    .querySelectorAll('[data-resource-close]')
-    .forEach(element => {
-      element.addEventListener('click', closeResource);
-    });
+  });
 
-  document.addEventListener('keydown', event => {
+  document.addEventListener("keydown", event => {
 
-    if (event.key === 'Escape' && !viewer.hidden) {
-      closeResource();
+    if (event.key === "Escape" && !viewer.hidden) {
+      viewer.hidden = true;
+      document.body.classList.remove("resource-viewer-open");
+      frame.src = "about:blank";
     }
 
   });
