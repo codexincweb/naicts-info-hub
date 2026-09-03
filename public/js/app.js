@@ -357,3 +357,49 @@ window.addEventListener('hashchange', () => {
 initializeApp().catch(error => {
   console.error('Application initialization failed:', error);
 });
+
+
+/* ============================================================
+   STUDENT RESOURCE VIEWER
+============================================================ */
+
+(() => {
+  const viewer = document.getElementById('resourceViewer');
+
+  if (!viewer) return;
+
+  const frame = document.getElementById('resourceFrame');
+
+  const openResource = () => {
+    viewer.hidden = false;
+    document.body.classList.add('resource-viewer-open');
+
+    if (frame && !frame.src) {
+      frame.src = 'https://studentstimetableplannerv1.vercel.app/';
+    }
+  };
+
+  const closeResource = () => {
+    viewer.hidden = true;
+    document.body.classList.remove('resource-viewer-open');
+  };
+
+  document.querySelectorAll('[data-resource="timetable"]')
+    .forEach(button => {
+      button.addEventListener('click', event => {
+        event.preventDefault();
+        openResource();
+      });
+    });
+
+  viewer.querySelectorAll('[data-resource-close]')
+    .forEach(button => {
+      button.addEventListener('click', closeResource);
+    });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !viewer.hidden) {
+      closeResource();
+    }
+  });
+})();

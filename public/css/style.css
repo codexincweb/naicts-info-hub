@@ -556,6 +556,7 @@ body.about-page .soft .card:hover {
 }
 
 .resource-card {
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 24px;
@@ -564,8 +565,9 @@ body.about-page .soft .card:hover {
   border-radius: 18px;
   background: #fff;
   box-shadow: 0 12px 35px rgba(0, 31, 84, .08);
-  text-decoration: none;
+  text-align: left;
   color: inherit;
+  cursor: pointer;
   transition:
     transform .25s ease,
     box-shadow .25s ease,
@@ -613,18 +615,111 @@ body.about-page .soft .card:hover {
   color: #001f54;
 }
 
-.footer-student-tools {
-  margin-top: 24px;
+
+/* ============================================================
+   RESOURCE VIEWER
+============================================================ */
+
+.resource-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
 }
 
-.footer-student-tools h3 {
-  margin: 0 0 10px;
+.resource-viewer[hidden] {
+  display: none;
 }
 
-.footer-student-tools a {
-  display: inline-block;
+.resource-viewer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 15, 30, .72);
+  backdrop-filter: blur(5px);
+}
+
+.resource-viewer-panel {
+  position: relative;
+  z-index: 1;
+  width: min(1400px, calc(100% - 32px));
+  height: min(900px, calc(100% - 32px));
+  margin: 16px auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .28);
+}
+
+.resource-viewer-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e8edf3;
+  background: #fff;
+}
+
+.resource-viewer-header h2 {
+  margin: 3px 0 0;
+  font-size: 18px;
+}
+
+.resource-viewer-close {
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 10px;
+  background: #f1f4f8;
+  color: #26364a;
+  font-size: 25px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.resource-viewer-close:hover {
+  background: #e6ebf1;
+}
+
+.resource-viewer-body {
+  flex: 1;
+  min-height: 0;
+  background: #f5f7fa;
+}
+
+.resource-viewer-body iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+}
+
+body.resource-viewer-open {
+  overflow: hidden;
+}
+
+
+/* ============================================================
+   FOOTER STUDENT TOOLS
+============================================================ */
+
+.footer-resource-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
   text-decoration: none;
 }
+
+.footer-resource-link:hover {
+  text-decoration: underline;
+}
+
 
 @media (max-width: 650px) {
 
@@ -641,6 +736,17 @@ body.about-page .soft .card:hover {
 
   .resource-arrow {
     white-space: normal;
+  }
+
+  .resource-viewer-panel {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .resource-viewer-header {
+    padding: 14px 16px;
   }
 }
 
