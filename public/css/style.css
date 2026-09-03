@@ -702,23 +702,6 @@ body.resource-viewer-open {
 }
 
 
-/* ============================================================
-   FOOTER STUDENT TOOLS
-============================================================ */
-
-.footer-resource-link {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.footer-resource-link:hover {
-  text-decoration: underline;
-}
 
 
 @media (max-width: 650px) {
@@ -750,3 +733,17 @@ body.resource-viewer-open {
   }
 }
 
+
+
+/* ============================================================
+   FOOTER STUDENT TOOLS
+============================================================ */
+
+.footer-resource-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.footer-resource-link:hover {
+  text-decoration: underline;
+}

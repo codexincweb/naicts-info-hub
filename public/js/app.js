@@ -363,43 +363,57 @@ initializeApp().catch(error => {
    STUDENT RESOURCE VIEWER
 ============================================================ */
 
-(() => {
+document.addEventListener('DOMContentLoaded', () => {
+
   const viewer = document.getElementById('resourceViewer');
+  const frame = document.getElementById('resourceFrame');
 
   if (!viewer) return;
 
-  const frame = document.getElementById('resourceFrame');
+  const openResource = (event) => {
 
-  const openResource = () => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
     viewer.hidden = false;
     document.body.classList.add('resource-viewer-open');
 
-    if (frame && !frame.src) {
+    if (frame) {
       frame.src = 'https://studentstimetableplannerv1.vercel.app/';
     }
   };
 
-  const closeResource = () => {
+  const closeResource = (event) => {
+
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
     viewer.hidden = true;
     document.body.classList.remove('resource-viewer-open');
   };
 
-  document.querySelectorAll('[data-resource="timetable"]')
-    .forEach(button => {
-      button.addEventListener('click', event => {
-        event.preventDefault();
-        openResource();
-      });
+  document
+    .querySelectorAll('[data-resource="timetable"]')
+    .forEach(element => {
+      element.addEventListener('click', openResource);
     });
 
-  viewer.querySelectorAll('[data-resource-close]')
-    .forEach(button => {
-      button.addEventListener('click', closeResource);
+  viewer
+    .querySelectorAll('[data-resource-close]')
+    .forEach(element => {
+      element.addEventListener('click', closeResource);
     });
 
   document.addEventListener('keydown', event => {
+
     if (event.key === 'Escape' && !viewer.hidden) {
       closeResource();
     }
+
   });
-})();
+
+});
