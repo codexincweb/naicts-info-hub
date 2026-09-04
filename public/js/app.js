@@ -363,49 +363,109 @@ initializeApp().catch(error => {
    STUDENT RESOURCE VIEWER
 ============================================================ */
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("click", event => {
+
+  const link = event.target.closest('[data-resource="timetable"]');
+
+  if (!link) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  let viewer = document.getElementById("resourceViewer");
+
+  if (!viewer) {
+
+    viewer = document.createElement("div");
+
+    viewer.id = "resourceViewer";
+    viewer.className = "resource-viewer";
+
+    viewer.innerHTML = `
+      <div class="resource-viewer-backdrop" data-resource-close></div>
+
+      <div
+        class="resource-viewer-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="resourceViewerTitle"
+      >
+        <header class="resource-viewer-header">
+          <div>
+            <span class="eyebrow">STUDENT TOOLS</span>
+            <h2 id="resourceViewerTitle">SICT Students Timetable Planner</h2>
+          </div>
+
+          <button
+            type="button"
+            class="resource-viewer-close"
+            data-resource-close
+            aria-label="Close resource"
+          >×</button>
+        </header>
+
+        <div class="resource-viewer-body">
+          <iframe
+            id="resourceFrame"
+            title="SICT Students Timetable Planner"
+            src="about:blank"
+            loading="lazy"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(viewer);
+  }
+
+  viewer.hidden = false;
+  document.body.classList.add("resource-viewer-open");
+
+  const frame = viewer.querySelector("#resourceFrame");
+
+  if (frame) {
+    frame.src = "https://studentstimetableplannerv1.vercel.app/";
+  }
+});
+
+document.addEventListener("click", event => {
+
+  const close = event.target.closest("[data-resource-close]");
+
+  if (!close) return;
 
   const viewer = document.getElementById("resourceViewer");
-  const frame = document.getElementById("resourceFrame");
 
-  if (!viewer || !frame) return;
+  if (!viewer) return;
 
-  document.querySelectorAll('[data-resource="timetable"]').forEach(link => {
+  event.preventDefault();
+  event.stopPropagation();
 
-    link.addEventListener("click", event => {
-      event.preventDefault();
-      event.stopPropagation();
+  viewer.hidden = true;
+  document.body.classList.remove("resource-viewer-open");
 
-      viewer.hidden = false;
-      document.body.classList.add("resource-viewer-open");
+  const frame = viewer.querySelector("#resourceFrame");
 
-      frame.src = "https://studentstimetableplannerv1.vercel.app/";
-    });
+  if (frame) {
+    frame.src = "about:blank";
+  }
+});
 
-  });
+document.addEventListener("keydown", event => {
 
-  viewer.querySelectorAll("[data-resource-close]").forEach(control => {
+  if (event.key !== "Escape") return;
 
-    control.addEventListener("click", event => {
-      event.preventDefault();
-      event.stopPropagation();
+  const viewer = document.getElementById("resourceViewer");
 
-      viewer.hidden = true;
-      document.body.classList.remove("resource-viewer-open");
+  if (!viewer || viewer.hidden) return;
 
-      frame.src = "about:blank";
-    });
+  viewer.hidden = true;
+  document.body.classList.remove("resource-viewer-open");
 
-  });
+  const frame = viewer.querySelector("#resourceFrame");
 
-  document.addEventListener("keydown", event => {
-
-    if (event.key === "Escape" && !viewer.hidden) {
-      viewer.hidden = true;
-      document.body.classList.remove("resource-viewer-open");
-      frame.src = "about:blank";
-    }
-
-  });
-
+  if (frame) {
+    frame.src = "about:blank";
+  }
 });
