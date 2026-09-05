@@ -1318,7 +1318,7 @@ async function gallery() {
           </small>
         </div>
 
-        <button onclick="newGalleryItem()">
+        <button id="addGalleryPhotoBtn" type="button">
           + Add Photo
         </button>
       </div>
@@ -1352,8 +1352,9 @@ async function gallery() {
                     }
 
                     <button
-                      class="danger"
-                      onclick="deleteGalleryItem(${item.id})"
+                      class="danger gallery-delete-btn"
+                      type="button"
+                      data-gallery-id="${item.id}"
                     >
                       Delete
                     </button>
@@ -1375,6 +1376,17 @@ async function gallery() {
 
     </div>
   `;
+
+  const addBtn = $('#addGalleryPhotoBtn');
+  if (addBtn) {
+    addBtn.addEventListener('click', newGalleryItem);
+  }
+
+  document.querySelectorAll('.gallery-delete-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      deleteGalleryItem(button.dataset.galleryId);
+    });
+  });
 }
 
 
