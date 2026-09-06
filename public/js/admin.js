@@ -1235,65 +1235,194 @@ async function media() {
       <h2>Media Library</h2>
 
       <p>
-        Upload images here when you need them.
-        Images are optional for posts and announcements.
+        Upload official NAICTS images. Uploaded images can be added
+        directly to the public SICT Gallery.
       </p>
 
       <form id="mediaForm">
 
-        <input
-          id="mediaFile"
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif"
-          required
-        >
+        <label>
+          <b>Photo Title</b>
+          <input
+            id="mediaTitle"
+            type="text"
+            placeholder="e.g. NAICTS Orientation Programme"
+            required
+          >
+        </label>
 
-        <button>
-          Upload Image
+        <label>
+          <b>Description</b>
+          <textarea
+            id="mediaDescription"
+            placeholder="Brief description of the photo..."
+          ></textarea>
+        </label>
+
+        <label>
+          <b>Category</b>
+          <select id="mediaCategory">
+            <option value="General">General</option>
+            <option value="Events">Events</option>
+            <option value="Activities">Activities</option>
+            <option value="Academic">Academic</option>
+            <option value="Leadership">Leadership</option>
+          </select>
+        </label>
+
+        <label>
+          <b>Image</b>
+          <input
+            id="mediaFile"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            required
+          >
+          <small>JPEG, PNG, WebP or GIF. Maximum 5 MB.</small>
+        </label>
+
+        <div id="mediaPreview" style="margin-top:15px"></div>
+
+        <button id="mediaUploadBtn" type="submit">
+          Upload to Gallery
         </button>
 
       </form>
 
-      <pre id="mediaResult"></pre>
+      <div id="mediaResult"></div>
 
     </div>
   `;
 
-  $('#mediaForm').onsubmit = async e => {
+  const form = $('#mediaForm');
+  const fileInput = $('#mediaFile');
+  const preview = $('#mediaPreview');
 
-    e.preventDefault();
+  fileInput.onchange = () => {
 
-    const file = $('#mediaFile').files[0];
+    const file = fileInput.files?.[0];
 
     if (!file) {
-      alert('Choose an image first..');
+      preview.innerHTML = '';
       return;
     }
 
-    const formData = new FormData();
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image must be 5 MB or smaller.');
+      fileInput.value = '';
+      preview.innerHTML = '';
+      return;
+    }
 
-    formData.append('image', file);
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      preview.innerHTML = `
+        <img
+          src="${reader.result}"
+          alt="Image preview"
+          style="
+            width:100%;
+            max-width:500px;
+            max-height:300px;
+            object-fit:cover;
+            border-radius:12px;
+            border:1px solid #e4e9f0;
+          "
+        >
+      `;
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  form.onsubmit = async e => {
+
+    e.preventDefault();
+
+    const file = fileInput.files?.[0];
+
+    if (!file) {
+      alert('Please choose an image.');
+      return;
+    }
+
+    const title = $('#mediaTitle').value.trim();
+
+    if (!title) {
+      alert('Photo title is required.');
+      return;
+    }
+
+    const button = $('#mediaUploadBtn');
+
+    button.disabled = true;
+    button.textContent = 'Uploading image...';
 
     try {
 
-      const data = await api('/api/admin/upload', {
+      /* Upload image to Cloudinary */
+
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const uploaded = await api('/api/admin/upload', {
         method: 'POST',
         body: formData
       });
 
-      $('#mediaResult').textContent = data.url;
+      if (!uploaded.url) {
+        throw new Error('Image upload failed.');
+      }
 
-      alert(
-        'Upload successful. Copy the URL into a post if needed.'
-      );
+      button.textContent = 'Saving to Gallery...';
+
+      /* Create the public Gallery record */
+
+      await api('/api/admin/gallery', {
+        method: 'POST',
+
+        headers: {
+          'Content-Type': 'application/json'
+        },
+
+        body: JSON.stringify({
+          title: title,
+          description: $('#mediaDescription').value.trim(),
+          category: $('#mediaCategory').value,
+          image: uploaded.url
+        })
+      });
+
+      $('#mediaResult').innerHTML = `
+        <div style="
+          margin-top:15px;
+          padding:15px;
+          border-radius:10px;
+          background:#eef8f1;
+        ">
+          <strong>Upload successful.</strong><br>
+          The image has been added to the SICT Gallery.
+        </div>
+      `;
+
+      form.reset();
+      preview.innerHTML = '';
+
+      alert('Image uploaded and added to the SICT Gallery.');
 
     } catch (error) {
 
-      alert(error.message);
+      alert(error.message || 'Unable to upload image.');
+
+    } finally {
+
+      button.disabled = false;
+      button.textContent = 'Upload to Gallery';
+
     }
   };
 }
-
 
 /* =========================
    GALLERY CMS
