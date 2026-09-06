@@ -1296,11 +1296,6 @@ async function media() {
 
 
 /* =========================
-   START
-========================= */
-
-showDash();
-/* =========================
    GALLERY CMS
 ========================= */
 
@@ -1669,3 +1664,10 @@ window.deleteGalleryItem = async id => {
 ========================= */
 
 window.gallery = gallery;
+
+/* =========================
+   START APPLICATION
+   Must run after all handlers are defined.
+========================= */
+
+showDash();
