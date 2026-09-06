@@ -1377,16 +1377,29 @@ async function gallery() {
     </div>
   `;
 
-  const addBtn = $('#addGalleryPhotoBtn');
-  if (addBtn) {
-    addBtn.addEventListener('click', () => window.newGalleryItem());
-  }
+  // Gallery actions are handled through document-level delegation.
+  // This works reliably for dynamically-rendered gallery buttons.
+  if (!window.__galleryClickHandlerInstalled) {
+    document.addEventListener('click', function galleryClickHandler(e) {
+      const addButton = e.target.closest('#addGalleryPhotoBtn');
+      if (addButton) {
+        e.preventDefault();
+        e.stopPropagation();
+        window.newGalleryItem();
+        return;
+      }
 
-  document.querySelectorAll('.gallery-delete-btn').forEach(button => {
-    button.addEventListener('click', () => {
-      window.deleteGalleryItem(button.dataset.galleryId);
+      const deleteButton = e.target.closest('.gallery-delete-btn');
+      if (deleteButton) {
+        e.preventDefault();
+        e.stopPropagation();
+        const id = deleteButton.dataset.galleryId;
+        if (id) window.deleteGalleryItem(id);
+      }
     });
-  });
+
+    window.__galleryClickHandlerInstalled = true;
+  }
 }
 
 
