@@ -1377,28 +1377,45 @@ async function gallery() {
     </div>
   `;
 
-  // Gallery actions are handled through document-level delegation.
-  // This works reliably for dynamically-rendered gallery buttons.
-  if (!window.__galleryClickHandlerInstalled) {
-    document.addEventListener('click', function galleryClickHandler(e) {
-      const addButton = e.target.closest('#addGalleryPhotoBtn');
-      if (addButton) {
+  // Directly bind Gallery controls after rendering.
+  const addBtn = $('#addGalleryPhotoBtn');
+
+  if (addBtn) {
+    addBtn.onclick = function(e) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      window.newGalleryItem();
+    };
+  }
+
+  document.querySelectorAll('.gallery-delete-btn').forEach(button => {
+    button.onclick = function(e) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      window.deleteGalleryItem(button.dataset.galleryId);
+    };
+  });
+
+  // Capture fallback for dynamically rendered Gallery controls.
+  if (!window.__galleryCaptureHandlerInstalled) {
+    document.addEventListener('click', function(e) {
+      const add = e.target.closest('#addGalleryPhotoBtn');
+      if (add) {
         e.preventDefault();
         e.stopPropagation();
         window.newGalleryItem();
         return;
       }
 
-      const deleteButton = e.target.closest('.gallery-delete-btn');
-      if (deleteButton) {
+      const del = e.target.closest('.gallery-delete-btn');
+      if (del) {
         e.preventDefault();
         e.stopPropagation();
-        const id = deleteButton.dataset.galleryId;
-        if (id) window.deleteGalleryItem(id);
+        window.deleteGalleryItem(del.dataset.galleryId);
       }
-    });
+    }, true);
 
-    window.__galleryClickHandlerInstalled = true;
+    window.__galleryCaptureHandlerInstalled = true;
   }
 }
 
