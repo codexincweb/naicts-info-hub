@@ -1379,12 +1379,12 @@ async function gallery() {
 
   const addBtn = $('#addGalleryPhotoBtn');
   if (addBtn) {
-    addBtn.addEventListener('click', newGalleryItem);
+    addBtn.addEventListener('click', () => window.newGalleryItem());
   }
 
   document.querySelectorAll('.gallery-delete-btn').forEach(button => {
     button.addEventListener('click', () => {
-      deleteGalleryItem(button.dataset.galleryId);
+      window.deleteGalleryItem(button.dataset.galleryId);
     });
   });
 }
