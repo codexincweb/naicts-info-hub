@@ -10,6 +10,7 @@ const multer = require('multer');
 const { fileTypeFromBuffer } = require('file-type');
 const cloudinary = require('cloudinary').v2;
 const { query, migrate } = require('./db');
+const adminDashboardHtml = require('./views/admin-dashboard');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,9 +25,7 @@ app.use(cors({ origin: process.env.CORS_ORIGIN || false }));
 app.use(express.json({ limit: '3mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.get('/admin/dashboard.html', adminPageAuth, staff, (req, res) => {
-  res.sendFile(
-    path.join(__dirname, 'views/admin-dashboard.html')
-  );
+  res.type('html').send(adminDashboardHtml);
 });
 
 app.use(express.static(PUBLIC));
