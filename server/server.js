@@ -25,7 +25,7 @@ app.use(express.json({ limit: '3mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.get('/admin/dashboard.html', adminPageAuth, staff, (req, res) => {
   res.sendFile(
-    path.join(__dirname, '../public/admin/dashboard.html')
+    path.join(__dirname, 'views/admin-dashboard.html')
   );
 });
 
@@ -36,7 +36,7 @@ if (hasCloudinary) cloudinary.config({ cloud_name: process.env.CLOUDINARY_CLOUD_
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024,
+    fileSize: 4 * 1024 * 1024,
     files: 1
   },
   fileFilter: (req, file, cb) => {
@@ -274,14 +274,14 @@ app.get('/api/admin/stats',auth,staff,async(req,res)=>{const [a,b,c,d,e]=await P
 app.get('/admin',(req,res)=>res.sendFile(path.join(PUBLIC,'admin.html')));
 app.use((req,res,next)=>{ if(req.method==='GET' && !req.path.startsWith('/api/')) return res.sendFile(path.join(PUBLIC,'index.html')); next(); });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`NAICTS INFOHUB running on port ${PORT}`);
+if (require.main === module) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`NAICTS INFOHUB running on port ${PORT}`);
 
-  migrate()
-    .then(() => {
-      console.log('Migration ok');
-    })
-    .catch(err => {
-      console.error('Migration failed:', err.message);
-    });
-});
+    migrate()
+      .then(() => console.log('Migration ok'))
+      .catch(err => console.error('Migration failed:', err.message));
+  });
+}
+
+module.exports = app;
