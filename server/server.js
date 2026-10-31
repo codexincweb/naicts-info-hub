@@ -7,7 +7,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const multer = require('multer');
-const { fileTypeFromBuffer } = require('file-type');
 const cloudinary = require('cloudinary').v2;
 const { query, migrate } = require('./db');
 const adminDashboardHtml = require('./views/admin-dashboard');
@@ -242,6 +241,7 @@ app.post('/api/admin/upload', auth, staff, upload.single('image'), async (req,re
   if (!hasCloudinary) return res.status(503).json({ error: 'Media storage is not configured.' });
 
   try {
+    const { fileTypeFromBuffer } = await import('file-type');
     const detected = await fileTypeFromBuffer(req.file.buffer);
     const allowedTypes = new Set(['jpg', 'png', 'webp', 'gif']);
 
