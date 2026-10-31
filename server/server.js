@@ -9,6 +9,7 @@ const rateLimit = require('express-rate-limit');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { query, migrate } = require('./db');
+const push = require('./push');
 const adminDashboardHtml = require('./views/admin-dashboard');
 
 const app = express();
@@ -108,6 +109,14 @@ function cleanContent(value) { return String(value || '').trim(); }
 app.get('/api/health', async (req, res) => { try { await query('SELECT 1'); res.json({ ok: true, name: 'NAICTS INFOHUB', database: 'postgresql', media: hasCloudinary ? 'cloudinary' : 'not_configured', time: now() }); } catch { res.status(503).json({ ok: false, error: 'Database unavailable' }); } });
 
 const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many login attempts. Please try again later.' } });
+const pushLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many notification requests. Please try again later.' }
+});
+
 app.post('/api/auth/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
@@ -154,6 +163,79 @@ app.get('/api/auth/me', auth, async (req, res) => {
   }
 });
 
+app.get('/api/public/push/config', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({
+    enabled: push.configured,
+    publicKey: push.configured ? push.publicKey : null
+  });
+});
+
+app.post('/api/public/push/subscribe', pushLimiter, async (req, res) => {
+  if (!push.configured) {
+    return res.status(503).json({ error: 'Notifications are not configured yet.' });
+  }
+
+  const { subscription, preferences } = req.body || {};
+
+  if (!push.isValidSubscription(subscription)) {
+    return res.status(400).json({ error: 'A valid push subscription is required.' });
+  }
+
+  try {
+    await push.saveSubscription(subscription, preferences);
+    res.status(201).json({ ok: true });
+  } catch (error) {
+    console.error('Unable to save push subscription:', error.message);
+    res.status(500).json({ error: 'Unable to save notification preferences.' });
+  }
+});
+
+app.post('/api/public/push/preferences', pushLimiter, async (req, res) => {
+  const endpoint = req.body?.endpoint;
+
+  if (!push.isValidEndpoint(endpoint)) {
+    return res.status(400).json({ error: 'A valid subscription endpoint is required.' });
+  }
+
+  try {
+    const preferences = await push.getSubscriptionPreferences(endpoint);
+    res.set('Cache-Control', 'no-store');
+    res.json({
+      subscribed: Boolean(preferences),
+      preferences: preferences || { posts: true, events: true }
+    });
+  } catch (error) {
+    console.error('Unable to load push preferences:', error.message);
+    res.status(500).json({ error: 'Unable to load notification preferences.' });
+  }
+});
+
+app.post('/api/public/push/unsubscribe', pushLimiter, async (req, res) => {
+  const endpoint = req.body?.endpoint;
+
+  if (typeof endpoint !== 'string' || endpoint.length > 4096) {
+    return res.status(400).json({ error: 'A valid subscription endpoint is required.' });
+  }
+
+  try {
+    const parsed = new URL(endpoint);
+    if (parsed.protocol !== 'https:') {
+      return res.status(400).json({ error: 'Invalid subscription endpoint.' });
+    }
+
+    await push.removeSubscription(endpoint);
+    res.json({ ok: true });
+  } catch (error) {
+    if (error instanceof TypeError) {
+      return res.status(400).json({ error: 'Invalid subscription endpoint.' });
+    }
+
+    console.error('Unable to remove push subscription:', error.message);
+    res.status(500).json({ error: 'Unable to update notification subscription.' });
+  }
+});
+
 app.get('/api/public/posts', async (req, res) => {
   const q = String(req.query.q || '').trim(); const cat = req.query.category;
   const args = []; const where = [`status = ANY($${args.length + 1})`]; args.push(publicStatuses);
@@ -173,18 +255,68 @@ app.post('/api/admin/posts', auth, staff, async (req,res) => {
   if (status === 'published' && !canPublish(req.user.role)) return res.status(403).json({ error: 'Publishing permission required' });
   let slug = slugify(title); const exists = await query('SELECT id FROM posts WHERE slug=$1',[slug]); if (exists.rowCount) slug += '-' + Date.now();
   const r = await query(`INSERT INTO posts(title,slug,excerpt,content,category,cover_image,author,status,featured,published_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,CASE WHEN $8='published' THEN NOW() ELSE NULL END) RETURNING *`, [title,slug,excerpt,cleanContent(content),category,cover_image,author||req.user.name,status,Boolean(featured)]);
+
+  if (status === 'published') {
+    try {
+      await push.notifySubscribers('posts', {
+        title: 'New NAICTS publication',
+        body: title,
+        url: '/updates.html'
+      });
+    } catch (error) {
+      console.error('Post notification failed:', error.message);
+    }
+  }
+
   res.status(201).json(r.rows[0]);
 });
 app.put('/api/admin/posts/:id', auth, staff, async (req,res) => {
   const old = await query('SELECT * FROM posts WHERE id=$1',[req.params.id]); if(!old.rowCount) return res.status(404).json({error:'Post not found'});
   const p=old.rows[0], b=req.body||{}; let status=b.status||p.status; if(status==='published'&&!canPublish(req.user.role)) return res.status(403).json({error:'Publishing permission required'}); let slug=slugify(b.title||p.title); const same=await query('SELECT id FROM posts WHERE slug=$1 AND id<>$2',[slug,p.id]); if(same.rowCount) slug+='-'+p.id;
   const published=status==='published'?(p.published_at||now()):null;
-  const r=await query(`UPDATE posts SET title=$1,slug=$2,excerpt=$3,content=$4,category=$5,cover_image=$6,author=$7,status=$8,featured=$9,published_at=$10,updated_at=NOW() WHERE id=$11 RETURNING *`,[b.title||p.title,slug,b.excerpt??p.excerpt,cleanContent(b.content ?? p.content),b.category||p.category,b.cover_image??p.cover_image,b.author||p.author,status,Boolean(b.featured),published,p.id]); res.json(r.rows[0]);
+  const r=await query(`UPDATE posts SET title=$1,slug=$2,excerpt=$3,content=$4,category=$5,cover_image=$6,author=$7,status=$8,featured=$9,published_at=$10,updated_at=NOW() WHERE id=$11 RETURNING *`,[b.title||p.title,slug,b.excerpt??p.excerpt,cleanContent(b.content ?? p.content),b.category||p.category,b.cover_image??p.cover_image,b.author||p.author,status,Boolean(b.featured),published,p.id]);
+
+  if (p.status !== 'published' && status === 'published') {
+    try {
+      await push.notifySubscribers('posts', {
+        title: 'New NAICTS publication',
+        body: r.rows[0].title,
+        url: '/updates.html'
+      });
+    } catch (error) {
+      console.error('Post publication notification failed:', error.message);
+    }
+  }
+
+  res.json(r.rows[0]);
 });
 app.delete('/api/admin/posts/:id',auth,staff,requireDeletePermission,async(req,res)=>{const r=await query('DELETE FROM posts WHERE id=$1',[req.params.id]);res.json({ok:r.rowCount>0});});
 
 app.get('/api/admin/events', auth, staff, async(req,res)=>{const r=await query('SELECT * FROM events ORDER BY date ASC');res.json(r.rows);});
-app.post('/api/admin/events', auth, staff, async(req,res)=>{const b=req.body||{};if(!b.title||!b.date)return res.status(400).json({error:'Title and date are required'});let slug=slugify(b.title);const e=await query('SELECT id FROM events WHERE slug=$1',[slug]);if(e.rowCount)slug+='-'+Date.now();const r=await query('INSERT INTO events(title,slug,description,date,time,venue,image) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *',[b.title,slug,b.description||'',b.date,b.time||'',b.venue||'',b.image||'']);res.status(201).json(r.rows[0]);});
+app.post('/api/admin/events', auth, staff, async(req,res)=>{
+  const b=req.body||{};
+  if(!b.title||!b.date)return res.status(400).json({error:'Title and date are required'});
+  let slug=slugify(b.title);
+  const e=await query('SELECT id FROM events WHERE slug=$1',[slug]);
+  if(e.rowCount)slug+='-'+Date.now();
+
+  const r=await query(
+    'INSERT INTO events(title,slug,description,date,time,venue,image) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *',
+    [b.title,slug,b.description||'',b.date,b.time||'',b.venue||'',b.image||'']
+  );
+
+  try {
+    await push.notifySubscribers('events', {
+      title: 'New NAICTS event',
+      body: b.title,
+      url: '/events.html'
+    });
+  } catch (error) {
+    console.error('Event notification failed:', error.message);
+  }
+
+  res.status(201).json(r.rows[0]);
+});
 app.delete('/api/admin/events/:id', auth, staff, requireDeletePermission, async(req,res)=>{const r=await query('DELETE FROM events WHERE id=$1',[req.params.id]);res.json({ok:r.rowCount>0});});
 app.get('/api/public/gallery', async (req,res) => {
   const r = await query(
