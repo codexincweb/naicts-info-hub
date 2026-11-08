@@ -42,72 +42,80 @@
 
     if (!config.enabled || !config.publicKey) return;
 
-    const panel = document.createElement('details');
-    panel.className = 'naicts-push-panel';
-
-    panel.innerHTML = `
-      <summary>Notification preferences</summary>
-      <div class="naicts-push-content">
-        <p>Choose which NAICTS updates you want to receive.</p>
-
-        <label>
-          <input type="checkbox" id="naicts-push-posts" checked>
-          New announcements and posts
-        </label>
-
-        <label>
-          <input type="checkbox" id="naicts-push-events" checked>
-          Events and event updates
-        </label>
-
-        <button type="button" id="naicts-push-action">
-          Enable notifications
-        </button>
-
-        <p id="naicts-push-status" role="status" aria-live="polite"></p>
-      </div>
-    `;
-
     const style = document.createElement('style');
     style.textContent = `
-      .naicts-push-panel {
+      .naicts-notification-button {
         position: fixed;
         z-index: 9998;
-        right: 16px;
-        bottom: 16px;
-        width: min(330px, calc(100vw - 32px));
+        right: 18px;
+        bottom: 18px;
+        width: 52px;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 50%;
+        color: #fff;
+        background: #173f78;
+        box-shadow: 0 5px 20px rgba(0,0,0,.22);
+        cursor: pointer;
+      }
+      .naicts-notification-button svg {
+        width: 24px;
+        height: 24px;
+      }
+      .naicts-notification-panel {
+        position: fixed;
+        z-index: 9999;
+        right: 18px;
+        bottom: 82px;
+        width: min(330px, calc(100vw - 36px));
+        padding: 16px;
         color: #172033;
         background: #fff;
         border: 1px solid #dce3ed;
         border-radius: 12px;
-        box-shadow: 0 8px 30px rgba(0,0,0,.14);
+        box-shadow: 0 8px 30px rgba(0,0,0,.16);
         font: 14px/1.5 system-ui, sans-serif;
       }
-      .naicts-push-panel summary {
+      .naicts-notification-panel[hidden] {
+        display: none !important;
+      }
+      .naicts-notification-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .naicts-notification-header strong {
+        font-size: 15px;
+      }
+      .naicts-notification-close {
+        border: 0;
+        background: transparent;
+        color: #536174;
+        font-size: 23px;
         cursor: pointer;
-        padding: 13px 16px;
-        font-weight: 650;
       }
-      .naicts-push-content {
-        padding: 0 16px 15px;
-      }
-      .naicts-push-content p {
+      .naicts-notification-panel p {
         margin: 5px 0 12px;
       }
-      .naicts-push-content label {
+      .naicts-notification-panel label {
         display: flex;
-        gap: 9px;
         align-items: center;
-        margin: 10px 0;
+        gap: 9px;
+        margin: 12px 0;
         cursor: pointer;
       }
-      .naicts-push-content input {
+      .naicts-notification-panel input {
         width: 17px;
         height: 17px;
       }
-      .naicts-push-content button {
+      .naicts-notification-action {
         width: 100%;
-        margin-top: 9px;
+        margin-top: 10px;
         padding: 11px 14px;
         border: 0;
         border-radius: 7px;
@@ -116,21 +124,74 @@
         font-weight: 600;
         cursor: pointer;
       }
-      .naicts-push-content button:disabled {
+      .naicts-notification-action:disabled {
         opacity: .6;
         cursor: wait;
       }
-      #naicts-push-status {
+      .naicts-notification-status {
         font-size: 12px;
-        margin-bottom: 0;
+        margin-bottom: 0 !important;
       }
     `;
 
     document.head.appendChild(style);
-    document.body.appendChild(panel);
 
-    const action = panel.querySelector('#naicts-push-action');
-    const status = panel.querySelector('#naicts-push-status');
+    const panel = document.createElement('section');
+    panel.className = 'naicts-notification-panel';
+    panel.hidden = true;
+    panel.setAttribute('aria-label', 'Manage notifications');
+
+    panel.innerHTML = `
+      <div class="naicts-notification-header">
+        <strong>Manage notifications</strong>
+        <button type="button"
+          class="naicts-notification-close"
+          aria-label="Close notification preferences">&times;</button>
+      </div>
+
+      <p>Choose which NAICTS updates you want to receive.</p>
+
+      <label>
+        <input type="checkbox" id="naicts-push-posts" checked>
+        New announcements and posts
+      </label>
+
+      <label>
+        <input type="checkbox" id="naicts-push-events" checked>
+        Events and event updates
+      </label>
+
+      <button type="button" class="naicts-notification-action">
+        Enable notifications
+      </button>
+
+      <p class="naicts-notification-status"
+        role="status" aria-live="polite"></p>
+    `;
+
+    const manageButton = document.createElement('button');
+    manageButton.type = 'button';
+    manageButton.className = 'naicts-notification-button';
+    manageButton.setAttribute('aria-label', 'Manage notifications');
+    manageButton.setAttribute('aria-expanded', 'false');
+    manageButton.title = 'Manage notifications';
+
+    manageButton.innerHTML = `
+      <svg viewBox="0 0 24 24"
+        fill="none" stroke="currentColor"
+        stroke-width="1.8" stroke-linecap="round"
+        stroke-linejoin="round" aria-hidden="true">
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
+        <path d="M10 21h4"/>
+      </svg>
+    `;
+
+    document.body.appendChild(panel);
+    document.body.appendChild(manageButton);
+
+    const action = panel.querySelector('.naicts-notification-action');
+    const closeButton = panel.querySelector('.naicts-notification-close');
+    const status = panel.querySelector('.naicts-notification-status');
     const posts = panel.querySelector('#naicts-push-posts');
     const events = panel.querySelector('#naicts-push-events');
 
@@ -143,6 +204,23 @@
       status.textContent = message;
     };
 
+    const openPanel = () => {
+      panel.hidden = false;
+      manageButton.setAttribute('aria-expanded', 'true');
+    };
+
+    const closePanel = () => {
+      panel.hidden = true;
+      manageButton.setAttribute('aria-expanded', 'false');
+    };
+
+    manageButton.addEventListener('click', () => {
+      if (panel.hidden) openPanel();
+      else closePanel();
+    });
+
+    closeButton.addEventListener('click', closePanel);
+
     let registration;
     let subscription;
 
@@ -151,24 +229,36 @@
       subscription = await registration.pushManager.getSubscription();
 
       if (subscription) {
-        const saved = await request('/api/public/push/preferences', {
-          endpoint: subscription.endpoint
-        });
-
-        if (saved.subscribed && saved.preferences) {
-          posts.checked = saved.preferences.posts !== false;
-          events.checked = saved.preferences.events !== false;
-        } else {
-          await request('/api/public/push/subscribe', {
-            subscription: subscription.toJSON(),
-            preferences: preferences()
-          });
-        }
-
+        // An existing browser subscription means the panel
+        // should stay hidden. Restore preferences from Neon.
+        closePanel();
         action.textContent = 'Disable notifications';
-        setStatus('Notifications are enabled on this device.');
+
+        try {
+          const saved = await request('/api/public/push/preferences', {
+            endpoint: subscription.endpoint
+          });
+
+          if (saved.subscribed && saved.preferences) {
+            posts.checked = saved.preferences.posts !== false;
+            events.checked = saved.preferences.events !== false;
+          } else {
+            await request('/api/public/push/subscribe', {
+              subscription: subscription.toJSON(),
+              preferences: preferences()
+            });
+          }
+        } catch (error) {
+          console.error('Unable to synchronise notification preferences:', error);
+          setStatus('Could not load saved preferences. Try again later.');
+        }
+      } else {
+        // Only show the full panel when this device is not subscribed.
+        openPanel();
       }
-    } catch {
+    } catch (error) {
+      console.error('Notification setup error:', error);
+      openPanel();
       setStatus('Notification setup is unavailable in this browser.');
       action.disabled = true;
       return;
@@ -183,10 +273,16 @@
             endpoint: subscription.endpoint
           });
 
-          await subscription.unsubscribe();
+          const removed = await subscription.unsubscribe();
+
+          if (!removed) {
+            throw new Error('The browser could not disable this subscription.');
+          }
+
           subscription = null;
           action.textContent = 'Enable notifications';
           setStatus('Notifications have been disabled on this device.');
+          openPanel();
           return;
         }
 
@@ -215,14 +311,17 @@
         });
 
         action.textContent = 'Disable notifications';
-        setStatus('Notifications are enabled on this device.');
+        setStatus('Notifications successfully enabled.');
+
+        // Hide the panel after successful activation.
+        closePanel();
       } catch (error) {
         setStatus(error.message);
 
-        if (subscription) {
-          const saved = await registration.pushManager.getSubscription();
-          if (saved) subscription = saved;
-        }
+        const current = await registration.pushManager.getSubscription()
+          .catch(() => null);
+
+        if (current) subscription = current;
       } finally {
         action.disabled = false;
       }
@@ -249,9 +348,9 @@
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      initialise().catch(() => {});
+      initialise().catch(error => console.error('Push setup failed:', error));
     });
   } else {
-    initialise().catch(() => {});
+    initialise().catch(error => console.error('Push setup failed:', error));
   }
 })();

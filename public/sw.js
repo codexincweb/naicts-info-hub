@@ -1,4 +1,4 @@
-const VERSION = 'naicts-infohub-v2';
+const VERSION = 'naicts-infohub-v3';
 const STATIC_CACHE = `${VERSION}-static`;
 const PAGE_CACHE = `${VERSION}-pages`;
 const API_CACHE = `${VERSION}-public-api`;
